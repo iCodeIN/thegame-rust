@@ -1,6 +1,7 @@
 use low_level;
 use map;
 use tables;
+use std::cmp::{min, max};
 
 const MaxChars: i32 = 4;
 const chrSTR: i32 = 0;
@@ -12,87 +13,96 @@ const MaxSkills: i32 = 2;
 const skillHandWeapon: i32 = 0;
 const skillTrapSearch: i32 = 1; 
 
-#[derive(Debug)]
 pub struct THero {
-    Chars: [i32; MaxChars as usize],
-    Skills: [i32; MaxSkills as usize],
-    x: i32,
-    y: i32,
-    HP: i32,
-    MaxHP: i32,
-    Exp: i32,
-    MaxExp: i32,
-    Level: i32,
-    VisLong: i32
+    pub Chars: [i32; MaxChars as usize],
+    pub Skills: [i32; MaxSkills as usize],
+    pub x: i32,
+    pub y: i32,
+    pub HP: i32,
+    pub MaxHP: i32,
+    pub Exp: i32,
+    pub MaxExp: i32,
+    pub Level: i32,
+    pub VisLong: i32
 }
 
 const MaxHeroes: i32 = 1;
 
 pub type Heroes = [THero; MaxHeroes as usize];
-static mut HEROES: Heroes = [
-	THero {
-		Chars: [0, 0, 0, 0],
-		Skills: [0, 0],
-		x: 0,
-		y: 0,
-		HP: 0,
-		MaxHP: 0,
-		Exp: 0,
-		MaxExp: 0,
-		Level: 0,
-		VisLong: 0}; MaxHeroes as usize];
-static mut CUR_HERO: i32 = 0;
+pub static mut HEROES: Heroes = [
+    THero {
+        Chars: [0, 0, 0, 0],
+        Skills: [0, 0],
+        x: 0,
+        y: 0,
+        HP: 0,
+        MaxHP: 0,
+        Exp: 0,
+        MaxExp: 0,
+        Level: 0,
+        VisLong: 0}; MaxHeroes as usize];
+pub static mut CUR_HERO: i32 = 0;
 
 fn InitHero(HeroNum: i32) {
-	unsafe {
-		let hero: &mut THero = &mut HEROES[HeroNum as usize];
+    use low_level::CURSOR;
+    let hero: &mut THero = get_mut_ref_curhero!(HeroNum);
 
-		for i in 0..MaxChars {
-			hero.Chars[i as usize] = 0;
-		}
-		for j in 0..MaxSkills {
-			hero.Skills[j as usize] = 0;
-		}
+    for i in 0..MaxChars {
+        hero.Chars[i as usize] = 0;
+    }
+    for j in 0..MaxSkills {
+        hero.Skills[j as usize] = 0;
+    }
 
-		hero.Level = 0;
-		hero.MaxHP = tables::HPLevel_Table[hero.Level as usize];
-		hero.HP = hero.MaxHP;
-		hero.Exp = 0;
-		hero.MaxExp = tables::ExpLevel_Table[hero.Level as usize];
-		hero.VisLong = 2;
+    hero.Level = 0;
+    hero.MaxHP = tables::HPLevel_Table[hero.Level as usize];
+    hero.HP = hero.MaxHP;
+    hero.Exp = 0;
+    hero.MaxExp = tables::ExpLevel_Table[hero.Level as usize];
+    hero.VisLong = 2;
 
-		let map_ = map::GAME_MAP[map::CUR_MAP as usize];
-		let coords = loop {
-    	    let x = map_.LocalMapLeft + map::LOCAL_MAP_WIDTH / 3 +
-    	    	map::random(map::LOCAL_MAP_WIDTH / 3);
-    	    let y = map_.LocalMapTop + map::LOCAL_MAP_HEIGHT / 3 +
-    	        map::random(map::LOCAL_MAP_HEIGHT / 3);
-    		if map::FreeTile(map_.Cells[x as usize][y as usize].Tile) {
-    			break (x, y)
-    		};
-		};
-		hero.x = coords.0;
-		hero.y = coords.1;
-		low_level::log(&hero.x.to_string());
-		low_level::log(&hero.y.to_string());
-		SetHeroVisible(HeroNum);
-	}
+    let cur_map = get_ref_curmap!();
+    let coords = loop {
+        let x = cur_map.LocalMapLeft
+              + map::random(map::SCROLL_DELTA,
+                            map::LOCAL_MAP_WIDTH - map::SCROLL_DELTA - 1);
+        let y = cur_map.LocalMapTop
+              + map::random(map::SCROLL_DELTA,
+                            map::LOCAL_MAP_HEIGHT - map::SCROLL_DELTA - 1);
+        if map::FreeTile(cur_map.Cells[x as usize][y as usize].Tile) {
+            break (x, y)
+        };
+    };
+    hero.x = coords.0;
+    hero.y = coords.1;
+    unsafe {
+        CURSOR.x = hero.x - cur_map.LocalMapLeft;
+        CURSOR.y = hero.y - cur_map.LocalMapTop;
+    }
+    SetHeroVisible(HeroNum);
 }
 
 pub fn InitHeroes() {
-	for i in 0..MaxHeroes {
-		InitHero(i);
-	};
+    for i in 0..MaxHeroes {
+        InitHero(i);
+    };
 }
 
-fn SetHeroVisible(HeroNum: i32) {
-	unsafe {
-		let hero: &mut THero = &mut HEROES[HeroNum as usize];
-		let cur_map: &mut map::TMap = &mut map::GAME_MAP[map::CUR_MAP as usize];
-		for i in hero.x - hero.VisLong..hero.x + hero.VisLong {
-			for j in hero.y - hero.VisLong..hero.y + hero.VisLong {
-		    	cur_map.Cells[i as usize][j as usize].IsVisible = true;
-			}
-		}
-	}
+pub fn SetHeroVisible(HeroNum: i32) {
+    let hero: &mut THero = get_mut_ref_curhero!(HeroNum);
+    let cur_map: &mut map::TMap = get_mut_ref_curmap!();
+    for x in max(0, hero.x - hero.VisLong)..min(map::MAP_WIDTH, hero.x + hero.VisLong + 1) {
+        for y in max(0, hero.y - hero.VisLong)..min(map::MAP_HEIGHT, hero.y + hero.VisLong + 1) {
+            get_mut_ref_cell!(x, y).IsVisible = true;
+        }
+    }
+}
+
+pub fn IncHP(mut app: &mut low_level::Cursive, hero: &mut THero, dam: i32) {
+    hero.HP = max(0, hero.HP + dam);
+    if hero.HP <= 0 {
+        low_level::HeroDied(&mut app);
+    } else if hero.HP > hero.MaxHP {
+        hero.HP = hero.MaxHP;
+    }
 }

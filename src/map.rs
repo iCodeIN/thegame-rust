@@ -6,29 +6,45 @@
 #![allow(unused_variables)]
 
 use low_level;
-use hero;
+use std::cmp::{min, max};
 
 //-------------------------------Constants------------------------------------//
 
-pub const LOCAL_MAP_WIDTH: i32 = 8;
-pub const LOCAL_MAP_HEIGHT: i32 = 8;
+pub enum Direction {
+    Left,
+    Right,
+    Up,
+    Down
+}
 
-pub const MAP_WIDTH: i32 = 32 + LOCAL_MAP_WIDTH*2;
-pub const MAP_HEIGHT: i32 = 32 + LOCAL_MAP_HEIGHT*2;
+pub const LOCAL_MAP_WIDTH: i32 = 78;
+pub const LOCAL_MAP_HEIGHT: i32 = 48;
+
+const MAP_BORDER: i32 = 2;
+
+pub const MAP_WIDTH: i32 = LOCAL_MAP_WIDTH*2 + MAP_BORDER*2;
+pub const MAP_HEIGHT: i32 = LOCAL_MAP_HEIGHT*2 + MAP_BORDER*2;
 
 type Tile = i32;
 
-const tileGrass: Tile = 0;
+pub const tileGrass: Tile = 0;
 const tileGround: Tile = 1;
 const tileStairsUp: Tile = 2;
 const tileStairsDown: Tile = 3;
+const tileTrap: Tile = 4;
+const tileLive: Tile = 5;
 
-const tileFirstStopTile: Tile = 4;
+const tileFirstStopTile: Tile = 6;
 const tileTree: Tile = tileFirstStopTile;
 const tileStone: Tile = tileFirstStopTile + 1;
 pub const tileLast: Tile = tileFirstStopTile + 1;
 
+pub const TrapTileSet: [Tile; 1usize] = [tileTrap; 1usize];
+pub const LiveTileSet: [Tile; 1usize] = [tileLive; 1usize];
+
 const MaxDungeonLevel: i32 = 7;
+
+pub const SCROLL_DELTA: i32 = 3;
 
 //-------------------------------Data types-----------------------------------//
 
@@ -48,12 +64,12 @@ impl Clone for TMapCell {
 
 type Cells = [[TMapCell; MAP_HEIGHT as usize]; MAP_WIDTH as usize];
 pub struct TMap {
- 	pub Cells: Cells,
-	pub LocalMapLeft: i32,
-	pub LocalMapTop: i32
+     pub Cells: Cells,
+    pub LocalMapLeft: i32,
+    pub LocalMapTop: i32
 }
 
-impl Copy for TMap { }
+impl Copy for TMap {}
 
 impl Clone for TMap {
     fn clone(&self) -> TMap {
@@ -63,86 +79,129 @@ impl Clone for TMap {
 
 pub type TGameMap = [TMap; MaxDungeonLevel as usize];
 pub static mut GAME_MAP: TGameMap = [
-	TMap {
-		Cells: [
-			[TMapCell {
-				Tile: tileGrass, IsVisible: false
-			}; MAP_HEIGHT as usize]; MAP_WIDTH as usize],
-		LocalMapLeft: 0,
-		LocalMapTop: 0
-	}; MaxDungeonLevel as usize];
+    TMap {
+        Cells: [
+            [TMapCell {
+                Tile: tileGrass, IsVisible: false
+            }; MAP_HEIGHT as usize]; MAP_WIDTH as usize],
+        LocalMapLeft: 0,
+        LocalMapTop: 0
+    }; MaxDungeonLevel as usize];
 pub static mut CUR_MAP: i32 = 0;
-
-pub fn MapGeneration(MapLevel: i32) {
-	unsafe {
-		CUR_MAP = MapLevel;
-		let cur_map = &mut GAME_MAP[CUR_MAP as usize];
-		for x in 0..MAP_WIDTH {
-			for y in 0..MAP_HEIGHT {
-				let mut cell = &mut cur_map.Cells[x as usize][y as usize];
-		  		if (x <= LOCAL_MAP_WIDTH)
-		  			&& (x >= MAP_WIDTH-LOCAL_MAP_WIDTH)
-		  			&& (y <= LOCAL_MAP_HEIGHT)
-		  			&& (y >= MAP_HEIGHT-LOCAL_MAP_HEIGHT) {
-		    		cell.Tile = tileStone;
-		    	} else if random(100) < 35 {
-		    		cell.Tile = tileTree;
-		    	} else if random(2) == 1 {
-		    		cell.Tile = tileGrass;
-		    	} else {
-		    		cell.Tile = tileGround;
-		    	}
-				cell.IsVisible = false;
-			}
-		}
-
-		cur_map.LocalMapLeft = MAP_WIDTH/2;
-		cur_map.LocalMapTop = MAP_HEIGHT/2;
-
-		if MapLevel < MaxDungeonLevel {
-    		for i in 0..2 {
-    			let (x, y) = FreeMapPoint(&cur_map);
-	    		cur_map.Cells[x as usize][y as usize].Tile = tileStairsDown;
-    		}
-		};
-
-		if MapLevel > 1 {
-			let (x, y) = FreeMapPoint(&cur_map);
-			cur_map.Cells[x as usize][y as usize].Tile = tileStairsUp;
-		};
-	};
-}
-
-pub fn ShowMap(mut app: &mut low_level::Cursive) {
-	let cur_map = unsafe { &GAME_MAP[CUR_MAP as usize] };
-	low_level::PrepareMap();
-	for x in cur_map.LocalMapLeft..cur_map.LocalMapLeft + LOCAL_MAP_WIDTH {
-		for y in cur_map.LocalMapTop..cur_map.LocalMapTop + LOCAL_MAP_HEIGHT {
-	    	low_level::ShowCell(app, &cur_map.Cells[x as usize][y as usize], x, y);
-	    }
-	}
-}
-
 
 //-------------------------------Functions------------------------------------//
 
-pub fn random(end_interval: i32) -> i32 {
-	use rand::{thread_rng, sample};
-	let mut rng = thread_rng();
-	sample(&mut rng, 0..end_interval, 1)[0]
+pub fn MapGeneration(MapLevel: i32) {
+    unsafe { CUR_MAP = MapLevel; }
+    let cur_map = get_mut_ref_curmap!();
+    for x in 0..MAP_WIDTH {
+        for y in 0..MAP_HEIGHT {
+            let mut cell = get_mut_ref_cell!(x, y);
+              if (x < MAP_BORDER)
+              || (x > MAP_WIDTH - MAP_BORDER - 1)
+              || (y < MAP_BORDER)
+              || (y > MAP_HEIGHT - MAP_BORDER - 1) {
+                cell.Tile = tileStone;
+            } else if random(0, 100) < 32 {
+                cell.Tile = tileTree;
+            } else if random(0, 2) == 1 {
+                cell.Tile = tileGrass;
+            } else {
+                cell.Tile = tileGround;
+            }
+            if random(0, 100) == 0 {
+                if random(0, 2) == 0 {
+                    cell.Tile = tileTrap;
+                } else {
+                    cell.Tile = tileLive;
+                }
+            }
+            cell.IsVisible = false;
+        }
+    }
+
+    cur_map.LocalMapLeft = MAP_WIDTH/4;
+    cur_map.LocalMapTop = MAP_HEIGHT/4;
+
+    if MapLevel < MaxDungeonLevel {
+        for i in 0..2 {
+            let (x, y) = FreeMapPoint(&cur_map);
+            cur_map.Cells[x as usize][y as usize].Tile = tileStairsDown;
+        }
+    };
+
+    if MapLevel > 1 {
+        let (x, y) = FreeMapPoint(&cur_map);
+        cur_map.Cells[x as usize][y as usize].Tile = tileStairsUp;
+    };
+}
+
+pub fn ShowMap(app: &mut low_level::Cursive) {
+    let cur_map = get_ref_curmap!();
+    low_level::PrepareMap();
+    for x in cur_map.LocalMapLeft..cur_map.LocalMapLeft + LOCAL_MAP_WIDTH  {
+        for y in cur_map.LocalMapTop..cur_map.LocalMapTop + LOCAL_MAP_HEIGHT  {
+            low_level::ShowCell(app, get_ref_cell!(x, y), x, y);
+        }
+    }
+}
+
+pub fn ScrollMap(direction: Direction) {
+    let cur_map = get_mut_ref_curmap!();
+    let (mut new_local_map_left, mut new_local_map_top) = (
+        cur_map.LocalMapLeft, cur_map.LocalMapTop);
+    match direction {
+        Direction::Left => {
+            new_local_map_left = max(0, cur_map.LocalMapLeft - LOCAL_MAP_WIDTH/2);
+        },
+        Direction::Right => {
+            new_local_map_left = min(MAP_WIDTH - LOCAL_MAP_WIDTH,
+                                       cur_map.LocalMapLeft + LOCAL_MAP_WIDTH/2);
+        },
+        Direction::Up => {
+            new_local_map_top = max(0, cur_map.LocalMapTop - LOCAL_MAP_HEIGHT/2);
+        },
+        Direction::Down => {
+            new_local_map_top = min(MAP_HEIGHT - LOCAL_MAP_HEIGHT,
+                                      cur_map.LocalMapTop + LOCAL_MAP_HEIGHT/2);
+        }
+    }
+    let dx = cur_map.LocalMapLeft - new_local_map_left;
+    let dy = cur_map.LocalMapTop - new_local_map_top;
+    cur_map.LocalMapLeft = new_local_map_left;
+    cur_map.LocalMapTop = new_local_map_top;
+    unsafe {
+        low_level::CURSOR.x += dx;
+        low_level::CURSOR.y += dy;
+    }
+}
+
+pub fn random(start: i32, end: i32) -> i32 {
+    use rand::{thread_rng, sample};
+       let mut rng = thread_rng();
+    sample(&mut rng, start..end, 1)[0]
 }
 
 pub fn FreeTile(tile: Tile) -> bool {
-	tile < tileFirstStopTile
+    tile < tileFirstStopTile
 }
 
-fn FreeMapPoint(cur_map: &TMap) -> (i32, i32) {
-	loop {
-    	let (x, y) = (
-    		random(MAP_WIDTH - LOCAL_MAP_WIDTH*2) + LOCAL_MAP_WIDTH,
-            random(MAP_HEIGHT - LOCAL_MAP_HEIGHT*2) + LOCAL_MAP_HEIGHT
+pub fn FreeMapPoint(cur_map: &TMap) -> (i32, i32) {
+    loop {
+        let (x, y) = (
+            random(MAP_BORDER, MAP_WIDTH - MAP_BORDER - 1),
+            random(MAP_BORDER, MAP_HEIGHT - MAP_BORDER - 1)
         );
-		if FreeTile(cur_map
-			.Cells[x as usize][y as usize].Tile) {break (x, y)};
-  	}
+        if FreeTile(cur_map
+            .Cells[x as usize][y as usize].Tile) {break (x, y)};
+      }
+}
+
+pub fn VisiblePoint(x: i32, y: i32) -> bool {
+    let cur_map = get_ref_curmap!();
+    get_ref_cell!(x, y).IsVisible
+        && x >= cur_map.LocalMapLeft
+        && x < cur_map.LocalMapLeft + LOCAL_MAP_WIDTH
+        && y >= cur_map.LocalMapTop
+        && y < cur_map.LocalMapTop + LOCAL_MAP_HEIGHT
 }
