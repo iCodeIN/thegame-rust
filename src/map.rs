@@ -9,8 +9,8 @@
 const LOCAL_MAP_WIDTH: i32 = 8;
 const LOCAL_MAP_HEIGHT: i32 = 8;
 
-const MAP_WIDTH: i32 = 2 + LOCAL_MAP_WIDTH*2;
-const MAP_HEIGHT: i32 = 2 + LOCAL_MAP_HEIGHT*2;
+const MAP_WIDTH: i32 = 32 + LOCAL_MAP_WIDTH*2;
+const MAP_HEIGHT: i32 = 32 + LOCAL_MAP_HEIGHT*2;
 
 type Tile = i32;
 
@@ -93,14 +93,26 @@ impl Game {
 		    		cell.Tile = tileGround;
 		    	}
 				cell.IsVisible = false;
-				println!("{:?}", &cell);
 			}
 		}
 	
 		cur_map.LocalMapLeft = MAP_WIDTH/2;
 		cur_map.LocalMapTop = MAP_HEIGHT/2;
+
+		if MapLevel < MaxDungeonLevel {
+        	for i in 0..2 {
+        		let (x, y) = FreeMapPoint(&cur_map);
+        		cur_map.Cells[x as usize][y as usize].Tile = tileStairsDown;
+        	}
+    	};
+
+    	if MapLevel > 1 {
+    		let (x, y) = FreeMapPoint(&cur_map);
+    		cur_map.Cells[x as usize][y as usize].Tile = tileStairsUp;
+    	};
 	}
 }
+
 
 //-------------------------------Functions------------------------------------//
 
@@ -112,6 +124,17 @@ fn random(end_interval: i32) -> i32 {
 
 fn FreeTile(tile: Tile) -> bool {
 	tile < tileFirstStopTile
+}
+
+fn FreeMapPoint(cur_map: &TMap) -> (i32, i32) {
+	loop {
+    	let (x, y) = (
+    		random(MAP_WIDTH - LOCAL_MAP_WIDTH*2) + LOCAL_MAP_WIDTH,
+            random(MAP_HEIGHT - LOCAL_MAP_HEIGHT*2) + LOCAL_MAP_HEIGHT
+        );
+		if FreeTile(cur_map
+			.Cells[x as usize][y as usize].Tile) {break (x, y)};
+  	}
 }
 
 //----------------------------------------------------------------------------//
