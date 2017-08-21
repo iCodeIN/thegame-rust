@@ -1,28 +1,32 @@
+#![allow(unused_variables)]
 #![allow(unused_mut)]
 #![allow(non_snake_case)]
 #![allow(non_upper_case_globals)]
 #![allow(dead_code)]
 #![allow(unused_variables)]
 
+use low_level;
+use hero;
+
 //-------------------------------Constants------------------------------------//
 
-const LOCAL_MAP_WIDTH: i32 = 8;
-const LOCAL_MAP_HEIGHT: i32 = 8;
+pub const LOCAL_MAP_WIDTH: i32 = 8;
+pub const LOCAL_MAP_HEIGHT: i32 = 8;
 
-const MAP_WIDTH: i32 = 32 + LOCAL_MAP_WIDTH*2;
-const MAP_HEIGHT: i32 = 32 + LOCAL_MAP_HEIGHT*2;
+pub const MAP_WIDTH: i32 = 32 + LOCAL_MAP_WIDTH*2;
+pub const MAP_HEIGHT: i32 = 32 + LOCAL_MAP_HEIGHT*2;
 
 type Tile = i32;
 
-const tileGrass: Tile = 1;
-const tileGround: Tile = 2;
-const tileStairsUp: Tile = 3;
-const tileStairsDown: Tile = 4;
+const tileGrass: Tile = 0;
+const tileGround: Tile = 1;
+const tileStairsUp: Tile = 2;
+const tileStairsDown: Tile = 3;
 
-const tileFirstStopTile: Tile = 5;
+const tileFirstStopTile: Tile = 4;
 const tileTree: Tile = tileFirstStopTile;
 const tileStone: Tile = tileFirstStopTile + 1;
-const tileLast: Tile = tileFirstStopTile + 1;
+pub const tileLast: Tile = tileFirstStopTile + 1;
 
 const MaxDungeonLevel: i32 = 7;
 
@@ -34,49 +38,45 @@ pub struct TMapCell {
    pub IsVisible: bool
 }
 
-#[derive(Debug)]
+impl Copy for TMapCell { }
+
+impl Clone for TMapCell {
+    fn clone(&self) -> TMapCell {
+        *self
+    }
+}
+
+type Cells = [[TMapCell; MAP_HEIGHT as usize]; MAP_WIDTH as usize];
 pub struct TMap {
- 	pub Cells: Vec<Vec<TMapCell>>,
+ 	pub Cells: Cells,
 	pub LocalMapLeft: i32,
 	pub LocalMapTop: i32
 }
 
-type TGameMap = Vec<TMap>;
-pub fn gen_map() -> TGameMap {
-	let mut tmp_vec = vec!();
-	for i in 0..MaxDungeonLevel {
-		let mut col = vec!();
-		for j in 0..MAP_WIDTH {
-			let mut row = vec!();
-			for k in 0..MAP_HEIGHT {
-				row.push(TMapCell {
-					Tile: tileGrass,
-					IsVisible: false
-				});
-			}
-			col.push(row);
-		}
-		tmp_vec.push(
-			TMap {
-				Cells: col,
-				LocalMapLeft: 0,
-				LocalMapTop: 0
-			}
-		);
-	}
-	tmp_vec
+impl Copy for TMap { }
+
+impl Clone for TMap {
+    fn clone(&self) -> TMap {
+        *self
+    }
 }
 
-#[derive(Debug)]
-pub struct Game {
-	pub GameMap: TGameMap,
-	pub CurMap: i32
-}
+pub type TGameMap = [TMap; MaxDungeonLevel as usize];
+pub static mut GAME_MAP: TGameMap = [
+	TMap {
+		Cells: [
+			[TMapCell {
+				Tile: tileGrass, IsVisible: false
+			}; MAP_HEIGHT as usize]; MAP_WIDTH as usize],
+		LocalMapLeft: 0,
+		LocalMapTop: 0
+	}; MaxDungeonLevel as usize];
+pub static mut CUR_MAP: i32 = 0;
 
-impl Game {
-	pub fn MapGeneration(&mut self, MapLevel: i32) {
-		self.CurMap = MapLevel;
-		let mut cur_map = &mut self.GameMap[self.CurMap as usize];
+pub fn MapGeneration(MapLevel: i32) {
+	unsafe {
+		CUR_MAP = MapLevel;
+		let cur_map = &mut GAME_MAP[CUR_MAP as usize];
 		for x in 0..MAP_WIDTH {
 			for y in 0..MAP_HEIGHT {
 				let mut cell = &mut cur_map.Cells[x as usize][y as usize];
@@ -95,34 +95,44 @@ impl Game {
 				cell.IsVisible = false;
 			}
 		}
-	
+
 		cur_map.LocalMapLeft = MAP_WIDTH/2;
 		cur_map.LocalMapTop = MAP_HEIGHT/2;
 
 		if MapLevel < MaxDungeonLevel {
-        	for i in 0..2 {
-        		let (x, y) = FreeMapPoint(&cur_map);
-        		cur_map.Cells[x as usize][y as usize].Tile = tileStairsDown;
-        	}
-    	};
+    		for i in 0..2 {
+    			let (x, y) = FreeMapPoint(&cur_map);
+	    		cur_map.Cells[x as usize][y as usize].Tile = tileStairsDown;
+    		}
+		};
 
-    	if MapLevel > 1 {
-    		let (x, y) = FreeMapPoint(&cur_map);
-    		cur_map.Cells[x as usize][y as usize].Tile = tileStairsUp;
-    	};
+		if MapLevel > 1 {
+			let (x, y) = FreeMapPoint(&cur_map);
+			cur_map.Cells[x as usize][y as usize].Tile = tileStairsUp;
+		};
+	};
+}
+
+pub fn ShowMap(mut app: &mut low_level::Cursive) {
+	let cur_map = unsafe { &GAME_MAP[CUR_MAP as usize] };
+	low_level::PrepareMap();
+	for x in cur_map.LocalMapLeft..cur_map.LocalMapLeft + LOCAL_MAP_WIDTH {
+		for y in cur_map.LocalMapTop..cur_map.LocalMapTop + LOCAL_MAP_HEIGHT {
+	    	low_level::ShowCell(app, &cur_map.Cells[x as usize][y as usize], x, y);
+	    }
 	}
 }
 
 
 //-------------------------------Functions------------------------------------//
 
-fn random(end_interval: i32) -> i32 {
+pub fn random(end_interval: i32) -> i32 {
 	use rand::{thread_rng, sample};
 	let mut rng = thread_rng();
 	sample(&mut rng, 0..end_interval, 1)[0]
 }
 
-fn FreeTile(tile: Tile) -> bool {
+pub fn FreeTile(tile: Tile) -> bool {
 	tile < tileFirstStopTile
 }
 
@@ -135,9 +145,4 @@ fn FreeMapPoint(cur_map: &TMap) -> (i32, i32) {
 		if FreeTile(cur_map
 			.Cells[x as usize][y as usize].Tile) {break (x, y)};
   	}
-}
-
-//----------------------------------------------------------------------------//
-
-fn main() {
 }
