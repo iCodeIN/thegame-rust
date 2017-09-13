@@ -14,7 +14,7 @@ use cursive::event::Key;
 use cursive::traits::*;
 use cursive::views::{TextView, Dialog, LinearLayout};
 
-const DEBUG: bool = false;
+const DEBUG: bool = true;
 
 pub fn log(message: &str) {
     if !DEBUG {return};
@@ -27,8 +27,8 @@ pub fn log(message: &str) {
     message.push_str("\n\n=====================================================\
                       ===========================\n\n");
     match file.write_all(message.as_bytes()) {
-        Err(message) => unimplemented!(),
-        Ok(result) => unimplemented!()
+        Err(message) => panic!("<Error writing programm log!>"),
+        Ok(result) => ()
     };
     //file.sync_all();
 }
@@ -56,7 +56,7 @@ pub const TileRecords: [TTileRecord; (map::tileLast + 1) as usize] = [
     TTileRecord {C: ':', Clr: Color::Black},     // Ground
     TTileRecord {C: '+', Clr: Color::Brown},     // StairsUp
     TTileRecord {C: '-', Clr: Color::Brown},     // StairsDown
-    TTileRecord {C: '(', Clr: Color::Brown},     // Trap
+    TTileRecord {C: ':', Clr: Color::Brown},     // Trap
     TTileRecord {C: '*', Clr: Color::Brown},     // Live
     TTileRecord {C: '^', Clr: Color::LightGray}, // Tree
     TTileRecord {C: 'X', Clr: Color::LightGreen} // Stone
@@ -75,10 +75,10 @@ pub const MonsterRecords: [TTileRecord; monster::MaxMonsterTypes as usize] = [
 pub fn InitApp(app: &mut Cursive) {
     use map::Direction::*;
     app.add_global_callback( Key::Esc,   |a| a.quit());
-    app.add_global_callback( Key::Up,    |a| move_cursor(a, Up));
-    app.add_global_callback( Key::Down,  |a| move_cursor(a, Down));
-    app.add_global_callback( Key::Left,  |a| move_cursor(a, Left));
-    app.add_global_callback( Key::Right, |a| move_cursor(a, Right));
+    //app.add_global_callback( Key::Up,    |a| move_cursor(a, Up));
+    //app.add_global_callback( Key::Down,  |a| move_cursor(a, Down));
+    //app.add_global_callback( Key::Left,  |a| move_cursor(a, Left));
+    //app.add_global_callback( Key::Right, |a| move_cursor(a, Right));
     app.add_global_callback( 'w',        |a| move_cursor(a, Up));
     app.add_global_callback( 's',        |a| move_cursor(a, Down));
     app.add_global_callback( 'a',        |a| move_cursor(a, Left));
@@ -154,22 +154,51 @@ fn create_main_screen(app: &mut Cursive) {
             .unwrap()
             .append_content("|\n");
     }
+    app.add_global_callback(' ',        |a| {});
+    app.add_global_callback( Key::Up,   |a| {});
+    app.add_global_callback( Key::Down, |a| {});
 }
 
 fn create_init_screen(app: &mut Cursive) {
-    app.add_layer(Dialog::around(TextView::new(texts::INIT_DIALOG)
-        .center())
+    let (width, height) = (70, 18);
+    app.add_layer(Dialog::around(LinearLayout::vertical()
+        .child(TextView::empty()
+            .with_id("top")
+            .fixed_size((width, height)))
+        .child(TextView::new(texts::INIT_DIALOG)
+            .center()
+            .fixed_size((width, 4)))
+        .child(TextView::empty()
+            .with_id("bottom")
+            .fixed_size((width, height)))
+        .fixed_size((width, height*2 + 4)))
         .title("THE GAME")
         .button("Start",
                 |mut a| {
                     a.pop_layer();
                     create_main_screen(a);
                     hero::InitHeroes();
-                    game::ShowGame(&mut a);
-                })
+                    game::ShowGame(&mut a);})
         .button("Quit", |a| a.quit())
-        .with_id("init")
-        .fixed_size((70, 40)));
+        .with_id("init"));
+
+    let mut top = app.find_id::<TextView>("top").unwrap();
+    let mut bottom = app.find_id::<TextView>("bottom").unwrap();
+    for i in 0..width*height {
+        top.append_content(["^", ":", "."][map::random(0, 3) as usize]);
+    }
+    for i in 0..width*height {
+        bottom.append_content(["^", ":", "."][map::random(0, 3) as usize]);
+    }
+    app.add_global_callback(' ',
+                            |mut a| {
+                                a.pop_layer();
+                                create_main_screen(a);
+                                hero::InitHeroes();
+                                game::ShowGame(&mut a);});
+    // TODO: w/o next two lines pressing <Arrow Up> or <Arrow Down> crashes the programm.
+    app.add_global_callback( Key::Up,    |a| {});
+    app.add_global_callback( Key::Down,  |a| {});
 }
 
 pub fn  VideoInitialize() {}
@@ -307,7 +336,9 @@ fn move_cursor(mut app: &mut Cursive, direction: map::Direction) {
         let cur_map = get_ref_curmap_wo_unsafe!();
         let hero: &mut hero::THero = get_mut_ref_curhero_wo_unsafe!(hero::CUR_HERO);
 
+        // If hero died to stop his moving at all.
         if hero.HP <= 0 {
+            GameOverAnimation(app);
             return;
         }
 
@@ -375,4 +406,17 @@ fn move_cursor(mut app: &mut Cursive, direction: map::Direction) {
 
 pub fn HeroDied(app: &mut Cursive) {
     ShowInfo(app, String::from(texts::STR_HERO_DIED));
+}
+
+fn GameOverAnimation(app: &mut Cursive) {
+    use std::{thread, time};
+    let interval = time::Duration::from_millis(10);
+    let cur_map = get_mut_ref_curmap!();
+    for y in cur_map.LocalMapTop..cur_map.LocalMapTop + map::LOCAL_MAP_HEIGHT {
+        thread::sleep(interval);
+        for x in cur_map.LocalMapLeft..cur_map.LocalMapLeft + map::LOCAL_MAP_WIDTH {
+            get_mut_ref_cell!(x, y).IsVisible = false;
+            ShowCell(app, get_ref_cell!(x, y), x, y);
+        }
+    }
 }

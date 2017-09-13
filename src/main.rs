@@ -22,6 +22,12 @@ mod texts;
 
 fn main() {
     let mut app: cursive::Cursive = cursive::Cursive::new();
+    //theme::load_theme_file("theme.toml").unwrap();
+    match app.load_theme_file("../../src/theme.toml") {
+        Ok(theme) => (),
+        Err(err) => low_level::log(&format!(
+            "<Unable loading the current theme!>: \n{:?}", err))
+    };
     low_level::VideoInitialize();
     map::MapGeneration(0);
     monster::GenerateMonsters();

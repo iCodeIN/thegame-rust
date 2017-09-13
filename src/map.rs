@@ -97,25 +97,27 @@ pub fn MapGeneration(MapLevel: i32) {
     for x in 0..MAP_WIDTH {
         for y in 0..MAP_HEIGHT {
             let mut cell = get_mut_ref_cell!(x, y);
-              if (x < MAP_BORDER)
-              || (x > MAP_WIDTH - MAP_BORDER - 1)
-              || (y < MAP_BORDER)
-              || (y > MAP_HEIGHT - MAP_BORDER - 1) {
+            if (x < MAP_BORDER)
+            || (x > MAP_WIDTH - MAP_BORDER - 1)
+            || (y < MAP_BORDER)
+            || (y > MAP_HEIGHT - MAP_BORDER - 1) {
                 cell.Tile = tileStone;
-            } else if random(0, 100) < 32 {
-                cell.Tile = tileTree;
-            } else if random(0, 2) == 1 {
-                cell.Tile = tileGrass;
             } else {
-                cell.Tile = tileGround;
-            }
-            if random(0, 100) == 0 {
-                if random(0, 2) == 0 {
-                    cell.Tile = tileTrap;
+                if random(0, 100) < 32 {
+                    cell.Tile = tileTree;
+                } else if random(0, 2) == 1 {
+                    cell.Tile = tileGrass;
                 } else {
-                    cell.Tile = tileLive;
+                    cell.Tile = tileGround;
                 }
-            }
+                if random(0, 100) == 0 {
+                    if random(0, 2) == 0 {
+                        cell.Tile = tileTrap;
+                    } else {
+                        cell.Tile = tileLive;
+                    }
+                }
+            };
             cell.IsVisible = false;
         }
     }

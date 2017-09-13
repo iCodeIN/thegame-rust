@@ -14,10 +14,10 @@ pub const STR_LIVE: &str = "You regained your hero's health in the Source!";
 
 pub const STR_HERO_DIED: &str = "Hero dies!";
 
-pub const INIT_DIALOG: &str = "Press `Start` to start playing.\
-                               \nPress `Quit` to exit.";
-pub const HELP_EXIT_DIALOG: &str = "Press `Help`to get help.\n\
-                              Press `Quit` or <Esc> key to exit.";
+pub const INIT_DIALOG: &str = "Select `Start` or press <Space> key to start playing.\
+                               \nSelect `Quit` to exit.";
+pub const HELP_EXIT_DIALOG: &str = "Select `Help`to get help.\n\
+                              Select `Quit` or press <Esc> key to exit.";
 
 pub fn help() -> String {
     format!("`@`: Hero (use <W-A-S-D> keys for moving)\n\
