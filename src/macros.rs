@@ -78,6 +78,12 @@ macro_rules! get_mut_ref_cell {
 
 #[macro_export]
 macro_rules! get_ref_curhero {
+    () => ({
+        use hero;
+        unsafe {
+            &hero::HEROES[hero::CUR_HERO as usize]
+        }
+    });
     ( $HeroNum:path ) => ({
         use hero;
         unsafe {
@@ -94,6 +100,12 @@ macro_rules! get_ref_curhero {
 
 #[macro_export]
 macro_rules! get_mut_ref_curhero {
+    () => ({
+        use hero;
+        unsafe {
+            &mut hero::HEROES[hero::CUR_HERO as usize]
+        }
+    });
     ( $HeroNum:ident ) => ({
         use hero;
         unsafe {
@@ -110,6 +122,12 @@ macro_rules! get_mut_ref_curhero {
 
 #[macro_export]
 macro_rules! get_mut_ref_curhero_wo_unsafe {
+    () => ({
+        use hero;
+        unsafe {
+            &mut hero::HEROES[hero::CUR_HERO as usize]
+        }
+    });
     ( $HeroNum:ident ) => ({
         use hero;
         &mut hero::HEROES[$HeroNum as usize]

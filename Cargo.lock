@@ -1,6 +1,6 @@
 [root]
 name = "thegame"
-version = "0.3.0"
+version = "0.4.1"
 dependencies = [
  "cursive 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "rand 0.3.16 (registry+https://github.com/rust-lang/crates.io-index)",

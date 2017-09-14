@@ -4,8 +4,6 @@
 #![allow(non_upper_case_globals)]
 #![allow(dead_code)]
 #![feature(drop_types_in_const)]
-#![feature(const_fn)]
-#![feature(use_extern_macros)]
 
 extern crate rand;
 extern crate cursive;
@@ -13,6 +11,7 @@ extern crate cursive;
 #[macro_use]
 mod macros;
 mod game;
+mod game_item;
 mod hero;
 mod low_level;
 mod map;
@@ -29,8 +28,6 @@ fn main() {
             "<Unable loading the current theme!>: \n{:?}", err))
     };
     low_level::VideoInitialize();
-    map::MapGeneration(0);
-    monster::GenerateMonsters();
     low_level::InitApp(&mut app);
     app.run();
 }

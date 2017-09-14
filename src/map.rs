@@ -17,15 +17,17 @@ pub enum Direction {
     Down
 }
 
-pub const LOCAL_MAP_WIDTH: i32 = 78;
-pub const LOCAL_MAP_HEIGHT: i32 = 48;
+// `LOCAL_MAP_WIDTH` and `LOCAL_MAP_HEIGHT` must be divisible by 2 and 3 without residue!
+// Otherwise happy debugging ;)
+pub const LOCAL_MAP_WIDTH: u32 = 39;//78;
+pub const LOCAL_MAP_HEIGHT: u32 = 24;//48;
 
-const MAP_BORDER: i32 = 2;
+const MAP_BORDER: u32 = 3;
 
-pub const MAP_WIDTH: i32 = LOCAL_MAP_WIDTH*2 + MAP_BORDER*2;
-pub const MAP_HEIGHT: i32 = LOCAL_MAP_HEIGHT*2 + MAP_BORDER*2;
+pub const MAP_WIDTH: u32 = LOCAL_MAP_WIDTH*2 + MAP_BORDER*2;
+pub const MAP_HEIGHT: u32 = LOCAL_MAP_HEIGHT*2 + MAP_BORDER*2;
 
-type Tile = i32;
+type Tile = u32;
 
 pub const tileGrass: Tile = 0;
 const tileGround: Tile = 1;
@@ -42,9 +44,9 @@ pub const tileLast: Tile = tileFirstStopTile + 1;
 pub const TrapTileSet: [Tile; 1usize] = [tileTrap; 1usize];
 pub const LiveTileSet: [Tile; 1usize] = [tileLive; 1usize];
 
-const MaxDungeonLevel: i32 = 7;
+const MaxDungeonLevel: u32 = 7;
 
-pub const SCROLL_DELTA: i32 = 3;
+pub const SCROLL_DELTA: u32 = 3;
 
 //-------------------------------Data types-----------------------------------//
 
@@ -64,9 +66,9 @@ impl Clone for TMapCell {
 
 type Cells = [[TMapCell; MAP_HEIGHT as usize]; MAP_WIDTH as usize];
 pub struct TMap {
-     pub Cells: Cells,
-    pub LocalMapLeft: i32,
-    pub LocalMapTop: i32
+    pub Cells: Cells,
+    pub LocalMapLeft: u32,
+    pub LocalMapTop: u32
 }
 
 impl Copy for TMap {}
@@ -87,11 +89,11 @@ pub static mut GAME_MAP: TGameMap = [
         LocalMapLeft: 0,
         LocalMapTop: 0
     }; MaxDungeonLevel as usize];
-pub static mut CUR_MAP: i32 = 0;
+pub static mut CUR_MAP: u32 = 0;
 
 //-------------------------------Functions------------------------------------//
 
-pub fn MapGeneration(MapLevel: i32) {
+pub fn MapGeneration(MapLevel: u32) {
     unsafe { CUR_MAP = MapLevel; }
     let cur_map = get_mut_ref_curmap!();
     for x in 0..MAP_WIDTH {
@@ -118,12 +120,12 @@ pub fn MapGeneration(MapLevel: i32) {
                     }
                 }
             };
-            cell.IsVisible = false;
+            cell.IsVisible = true;
         }
     }
 
-    cur_map.LocalMapLeft = MAP_WIDTH/4;
-    cur_map.LocalMapTop = MAP_HEIGHT/4;
+    cur_map.LocalMapLeft = MAP_WIDTH/3;
+    cur_map.LocalMapTop = MAP_HEIGHT/3;
 
     if MapLevel < MaxDungeonLevel {
         for i in 0..2 {
@@ -154,14 +156,14 @@ pub fn ScrollMap(direction: Direction) {
         cur_map.LocalMapLeft, cur_map.LocalMapTop);
     match direction {
         Direction::Left => {
-            new_local_map_left = max(0, cur_map.LocalMapLeft - LOCAL_MAP_WIDTH/2);
+            new_local_map_left = max(0, cur_map.LocalMapLeft as i32 - (LOCAL_MAP_WIDTH/2) as i32) as u32;
         },
         Direction::Right => {
             new_local_map_left = min(MAP_WIDTH - LOCAL_MAP_WIDTH,
                                        cur_map.LocalMapLeft + LOCAL_MAP_WIDTH/2);
         },
         Direction::Up => {
-            new_local_map_top = max(0, cur_map.LocalMapTop - LOCAL_MAP_HEIGHT/2);
+            new_local_map_top = max(0, cur_map.LocalMapTop as i32 - (LOCAL_MAP_HEIGHT/2) as i32) as u32;
         },
         Direction::Down => {
             new_local_map_top = min(MAP_HEIGHT - LOCAL_MAP_HEIGHT,
@@ -178,7 +180,7 @@ pub fn ScrollMap(direction: Direction) {
     }
 }
 
-pub fn random(start: i32, end: i32) -> i32 {
+pub fn random(start: u32, end: u32) -> u32 {
     use rand::{thread_rng, sample};
        let mut rng = thread_rng();
     sample(&mut rng, start..end, 1)[0]
@@ -188,7 +190,7 @@ pub fn FreeTile(tile: Tile) -> bool {
     tile < tileFirstStopTile
 }
 
-pub fn FreeMapPoint(cur_map: &TMap) -> (i32, i32) {
+pub fn FreeMapPoint(cur_map: &TMap) -> (u32, u32) {
     loop {
         let (x, y) = (
             random(MAP_BORDER, MAP_WIDTH - MAP_BORDER - 1),
@@ -196,10 +198,10 @@ pub fn FreeMapPoint(cur_map: &TMap) -> (i32, i32) {
         );
         if FreeTile(cur_map
             .Cells[x as usize][y as usize].Tile) {break (x, y)};
-      }
+    }
 }
 
-pub fn VisiblePoint(x: i32, y: i32) -> bool {
+pub fn VisiblePoint(x: u32, y: u32) -> bool {
     let cur_map = get_ref_curmap!();
     get_ref_cell!(x, y).IsVisible
         && x >= cur_map.LocalMapLeft

@@ -4,19 +4,19 @@ use texts;
 
 pub struct TMonster<'tm> {
     pub Name: &'tm str,
-    pub ID: i32,
-    pub x: i32,
-    pub y: i32,
+    pub ID: u32,
+    pub x: u32,
+    pub y: u32,
     pub HP: i32,
     pub MaxHP: i32,
-    pub XP: i32,
-    pub Level: i32,
+    pub XP: u32,
+    pub Level: u32,
     pub Ad1: i32,
     pub Ad2: i32,
     pub Dd1: i32,
     pub Dd2: i32,
-    pub ViewZone: i32,
-    pub RandomStep: i32
+    pub ViewZone: u32,
+    pub RandomStep: u32
 }
 
 impl<'tm> Copy for TMonster<'tm> {}
@@ -27,7 +27,7 @@ impl<'tm> Clone for TMonster<'tm> {
     }
 }
 
-pub const MaxMonsterTypes: i32 = 7;
+pub const MaxMonsterTypes: u32 = 7;
 type Monsters<'tm> = [TMonster<'tm>; MaxMonsterTypes as usize];
 pub const MonsterTypes: Monsters = [
     TMonster {
@@ -88,7 +88,7 @@ pub const MonsterTypes: Monsters = [
     }
 ];
 
-const MaxMonsters: i32 = (map::LOCAL_MAP_WIDTH + map::LOCAL_MAP_HEIGHT)*5/6;
+const MaxMonsters: u32 = (map::LOCAL_MAP_WIDTH + map::LOCAL_MAP_HEIGHT)*5/6;
 pub static mut MONSTERS: [TMonster; MaxMonsters as usize] = [
     TMonster {
         Name: texts::STR_MONSTER1,
@@ -106,7 +106,7 @@ pub fn GenerateMonsters() {
         if mt.Level == unsafe {map::CUR_MAP} { v.push(*mt); };
     }
     for i in 0..MaxMonsters - 1 {
-        let mut m: TMonster = v[map::random(0, v.len() as i32) as usize];
+        let mut m: TMonster = v[map::random(0, v.len() as u32) as usize];
         let (x, y) = map::FreeMapPoint(unsafe { &map::GAME_MAP[map::CUR_MAP as usize] });
         m.x = x;
         m.y = y;

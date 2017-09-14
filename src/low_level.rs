@@ -73,21 +73,10 @@ pub const MonsterRecords: [TTileRecord; monster::MaxMonsterTypes as usize] = [
 ];
 
 pub fn InitApp(app: &mut Cursive) {
-    use map::Direction::*;
-    app.add_global_callback( Key::Esc,   |a| a.quit());
-    //app.add_global_callback( Key::Up,    |a| move_cursor(a, Up));
-    //app.add_global_callback( Key::Down,  |a| move_cursor(a, Down));
-    //app.add_global_callback( Key::Left,  |a| move_cursor(a, Left));
-    //app.add_global_callback( Key::Right, |a| move_cursor(a, Right));
-    app.add_global_callback( 'w',        |a| move_cursor(a, Up));
-    app.add_global_callback( 's',        |a| move_cursor(a, Down));
-    app.add_global_callback( 'a',        |a| move_cursor(a, Left));
-    app.add_global_callback( 'd',        |a| move_cursor(a, Right));
-    
     create_init_screen(app);
 }
 
-fn create_main_screen(app: &mut Cursive) {
+pub fn create_main_screen(app: &mut Cursive) {
     let mut text: String = "".to_owned();
     for y in 0..map::LOCAL_MAP_HEIGHT {
         for x in 0..map::LOCAL_MAP_WIDTH {
@@ -107,10 +96,17 @@ fn create_main_screen(app: &mut Cursive) {
             .child(sep)
             .child(LinearLayout::vertical()
                 .child(
-                    TextView::empty()
-                        .center()
-                        .with_id("compass")
-                        .fixed_size((9, 5)))
+                    LinearLayout::horizontal()
+                        .child(
+                            TextView::empty()
+                                .center()
+                                .with_id("minimap")
+                                .fixed_size((12, 5)))
+                        .child(
+                            TextView::empty()
+                                .center()
+                                .with_id("compass")
+                                .fixed_size((9, 5))))
                 .child(
                     TextView::empty()
                         .with_id("sep1")
@@ -127,7 +123,7 @@ fn create_main_screen(app: &mut Cursive) {
                 .child(
                     TextView::empty()
                         .with_id("hero_info")
-                        .fixed_size((24, map::LOCAL_MAP_HEIGHT - 5 - 1 - 5 - 1 - 8)))
+                        .fixed_size((24, map::LOCAL_MAP_HEIGHT - 5 - 1 - 5 - 1 - 9)))
                 .child(Dialog::around(TextView::new(texts::HELP_EXIT_DIALOG))
                     .button("Help", |a| a.add_layer(
                         Dialog::info(texts::help())))
@@ -136,10 +132,11 @@ fn create_main_screen(app: &mut Cursive) {
                         create_init_screen(&mut a);
                     })
                     .with_id("exit")
-                    .fixed_size((24, 8)))
+                    .fixed_size((24, 9)))
             )
         )
     );
+    ShowMinimap(app);
     app.find_id::<TextView>("compass")
         .unwrap()
         .set_content("    N    \n         \n W  @  O \n         \n    S    ");
@@ -154,9 +151,17 @@ fn create_main_screen(app: &mut Cursive) {
             .unwrap()
             .append_content("|\n");
     }
-    app.add_global_callback(' ',        |a| {});
-    app.add_global_callback( Key::Up,   |a| {});
-    app.add_global_callback( Key::Down, |a| {});
+    use map::Direction::*;
+    app.add_global_callback( Key::Esc,   |a| {});
+    app.add_global_callback( Key::Up,    |a| move_cursor(a, Up));
+    app.add_global_callback( Key::Down,  |a| move_cursor(a, Down));
+    app.add_global_callback( Key::Left,  |a| move_cursor(a, Left));
+    app.add_global_callback( Key::Right, |a| move_cursor(a, Right));
+    app.add_global_callback( 'w',        |a| move_cursor(a, Up));
+    app.add_global_callback( 's',        |a| move_cursor(a, Down));
+    app.add_global_callback( 'a',        |a| move_cursor(a, Left));
+    app.add_global_callback( 'd',        |a| move_cursor(a, Right));
+    app.add_global_callback( ' ',        |a| {});
 }
 
 fn create_init_screen(app: &mut Cursive) {
@@ -173,12 +178,8 @@ fn create_init_screen(app: &mut Cursive) {
             .fixed_size((width, height)))
         .fixed_size((width, height*2 + 4)))
         .title("THE GAME")
-        .button("Start",
-                |mut a| {
-                    a.pop_layer();
-                    create_main_screen(a);
-                    hero::InitHeroes();
-                    game::ShowGame(&mut a);})
+        .button("Start", |mut a| {game::GenerateAll();
+                              game::StartGame(&mut a);})
         .button("Quit", |a| a.quit())
         .with_id("init"));
 
@@ -190,22 +191,17 @@ fn create_init_screen(app: &mut Cursive) {
     for i in 0..width*height {
         bottom.append_content(["^", ":", "."][map::random(0, 3) as usize]);
     }
-    app.add_global_callback(' ',
-                            |mut a| {
-                                a.pop_layer();
-                                create_main_screen(a);
-                                hero::InitHeroes();
-                                game::ShowGame(&mut a);});
-    // TODO: w/o next two lines pressing <Arrow Up> or <Arrow Down> crashes the programm.
-    app.add_global_callback( Key::Up,    |a| {});
-    app.add_global_callback( Key::Down,  |a| {});
+    app.add_global_callback(' ', |mut a| {game::GenerateAll();
+                                      game::StartGame(&mut a);});
+
+    app.add_global_callback( Key::Esc,   |a| a.quit());
 }
 
 pub fn  VideoInitialize() {}
 
 pub fn PrepareMap() {}
 
-pub fn ShowCell(app: &mut Cursive, t: &map::TMapCell, x: i32, y: i32) {
+pub fn ShowCell(app: &mut Cursive, t: &map::TMapCell, x: u32, y: u32) {
     let c = TileRecords[t.Tile as usize].C;
     let mut text: String = app.find_id::<TextView>("area")
         .unwrap()
@@ -219,7 +215,7 @@ pub fn ShowCell(app: &mut Cursive, t: &map::TMapCell, x: i32, y: i32) {
     app.find_id::<TextView>("area").unwrap().set_content(text);
 }
 
-pub fn ShowHero(app: &mut Cursive, HeroNum: i32) {
+pub fn ShowHero(app: &mut Cursive, HeroNum: u32) {
     let hero: &hero::THero = get_ref_curhero!(HeroNum);
     let mut text: String = app.find_id::<TextView>("area")
         .unwrap()
@@ -232,7 +228,7 @@ pub fn ShowHero(app: &mut Cursive, HeroNum: i32) {
     app.find_id::<TextView>("area").unwrap().set_content(text);
 }
 
-pub fn ShowHeroInfo(app: &mut Cursive, HeroNum: i32) {
+pub fn ShowHeroInfo(app: &mut Cursive, HeroNum: u32) {
     let hero: &hero::THero = get_ref_curhero!(HeroNum);
     app.find_id::<TextView>("hero_info")
         .unwrap()
@@ -264,6 +260,22 @@ pub fn ShowMonster(app: &mut Cursive, m: &monster::TMonster) {
 
 pub fn ShowInfo(app: &mut Cursive, text: String) {
     app.find_id::<TextView>("info")
+        .unwrap()
+        .set_content(text);
+}
+
+pub fn ShowMinimap(app: &mut Cursive) {
+    let mut text: String = "_|_|_\n_|_|_\n | | ".to_owned();
+    let hero: &hero::THero = get_ref_curhero!();
+    let x = if hero.x < map::MAP_WIDTH/3 {0}
+            else if hero.x < 2*map::MAP_WIDTH/3 {2}
+            else {4};
+    let y = if hero.y < map::MAP_HEIGHT/3 {0}
+            else if hero.y < 2*map::MAP_HEIGHT/3 {1}
+            else {2};
+    text.remove(6*y + x);
+    text.insert(6*y + x, '@');
+    app.find_id::<TextView>("minimap")
         .unwrap()
         .set_content(text);
 }
@@ -308,8 +320,8 @@ fn ShowCompassInfo(app: &mut Cursive, direction: map::Direction) {
 //------------------------------------------------------------------------------
 
 pub struct Cursor {
-    pub x: i32,
-    pub y: i32
+    pub x: u32,
+    pub y: u32
 }
 
 pub static mut CURSOR: Cursor = Cursor { x: 0, y: 0 };
@@ -317,7 +329,7 @@ pub static mut CURSOR: Cursor = Cursor { x: 0, y: 0 };
 fn move_cursor(mut app: &mut Cursive, direction: map::Direction) {
     use map::Direction::*;
     unsafe {
-        let (mut dx, mut dy) = (0, 0);
+        let (mut dx, mut dy) = (0i32, 0i32);
         match direction {
             Up => {
                 dy = if CURSOR.y > 0 {-1} else {0};
@@ -343,23 +355,33 @@ fn move_cursor(mut app: &mut Cursive, direction: map::Direction) {
         }
 
         if !map::FreeTile(
-            cur_map.Cells[(hero.x + dx) as usize]
-                [(hero.y + dy) as usize].Tile) {
+            cur_map.Cells[(hero.x as i32 + dx) as usize]
+                [(hero.y as i32 + dy) as usize].Tile) {
             return;
         }
 
         let (prev_x, prev_y) = (CURSOR.x, CURSOR.y);
-        CURSOR.x += dx;
-        CURSOR.y += dy;
-        hero.x += dx;
-        hero.y += dy;
+        if dx >= 0 {
+            CURSOR.x += dx as u32;
+            hero.x   += dx as u32;
+        } else {
+            CURSOR.x = (CURSOR.x as i32 + dx) as u32;
+            hero.x   = (hero.x as i32 + dx) as u32;
+        }
+        if dy >= 0 {
+            CURSOR.y += dy as u32;
+            hero.y   += dy as u32;
+        } else {
+            CURSOR.y = (CURSOR.y as i32 + dy) as u32;
+            hero.y   = (hero.y as i32 + dy) as u32;
+        }
         //ShowInfo(&mut app, CURSOR.x.to_string() + "-" + &CURSOR.y.to_string());
         if prev_x != CURSOR.x || prev_y != CURSOR.y {
             let cur_cell = get_mut_ref_cell_wo_unsafe!(hero.x, hero.y);
             for trap in map::TrapTileSet.iter() {
                 if &cur_cell.Tile == trap {
                     cur_cell.Tile = map::tileGrass;
-                    let dam = map::random(0, hero.MaxHP) + 1;//f32::round(hero.MaxHP * 1.1)) + 1;
+                    let dam = (map::random(0, hero.MaxHP as u32) + 1) as i32;//f32::round(hero.MaxHP * 1.1)) + 1;
                     ShowInfo(app, String::from(texts::STR_TRAP)
                                   + "(-"
                                   + &dam.abs().to_string()
@@ -370,7 +392,7 @@ fn move_cursor(mut app: &mut Cursive, direction: map::Direction) {
             for live in map::LiveTileSet.iter() {
                 if &cur_cell.Tile == live {
                     ShowInfo(app, String::from(texts::STR_LIVE));
-                    let inc = hero.MaxHP;
+                    let inc = hero.MaxHP as i32;
                     hero::IncHP(app, hero, inc);
                 }
             }

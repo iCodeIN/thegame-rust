@@ -3,30 +3,30 @@ use map;
 use tables;
 use std::cmp::{min, max};
 
-const MaxChars: i32 = 4;
-const chrSTR: i32 = 0;
-const chrDEX: i32 = 1;
-const chrCON: i32 = 2;
-const chrIQ: i32 = 3;
+const MaxChars: u32 = 4;
+const chrSTR: u32 = 0;
+const chrDEX: u32 = 1;
+const chrCON: u32 = 2;
+const chrIQ: u32 = 3;
 
-const MaxSkills: i32 = 2;
-const skillHandWeapon: i32 = 0;
-const skillTrapSearch: i32 = 1; 
+const MaxSkills: u32 = 2;
+const skillHandWeapon: u32 = 0;
+const skillTrapSearch: u32 = 1; 
 
 pub struct THero {
-    pub Chars: [i32; MaxChars as usize],
-    pub Skills: [i32; MaxSkills as usize],
-    pub x: i32,
-    pub y: i32,
+    pub Chars: [u32; MaxChars as usize],
+    pub Skills: [u32; MaxSkills as usize],
+    pub x: u32,
+    pub y: u32,
     pub HP: i32,
-    pub MaxHP: i32,
-    pub Exp: i32,
-    pub MaxExp: i32,
-    pub Level: i32,
-    pub VisLong: i32
+    pub MaxHP: u32,
+    pub Exp: u32,
+    pub MaxExp: u32,
+    pub Level: u32,
+    pub VisLong: u32
 }
 
-const MaxHeroes: i32 = 1;
+const MaxHeroes: u32 = 1;
 
 pub type Heroes = [THero; MaxHeroes as usize];
 pub static mut HEROES: Heroes = [
@@ -41,9 +41,9 @@ pub static mut HEROES: Heroes = [
         MaxExp: 0,
         Level: 0,
         VisLong: 0}; MaxHeroes as usize];
-pub static mut CUR_HERO: i32 = 0;
+pub static mut CUR_HERO: u32 = 0;
 
-fn InitHero(HeroNum: i32) {
+fn InitHero(HeroNum: u32) {
     use low_level::CURSOR;
     let hero: &mut THero = get_mut_ref_curhero!(HeroNum);
 
@@ -56,7 +56,7 @@ fn InitHero(HeroNum: i32) {
 
     hero.Level = 0;
     hero.MaxHP = tables::HPLevel_Table[hero.Level as usize];
-    hero.HP = hero.MaxHP;
+    hero.HP = hero.MaxHP as i32;
     hero.Exp = 0;
     hero.MaxExp = tables::ExpLevel_Table[hero.Level as usize];
     hero.VisLong = 2;
@@ -64,17 +64,19 @@ fn InitHero(HeroNum: i32) {
     let cur_map = get_ref_curmap!();
     let coords = loop {
         let x = cur_map.LocalMapLeft
-              + map::random(map::SCROLL_DELTA,
-                            map::LOCAL_MAP_WIDTH - map::SCROLL_DELTA - 1);
+              + map::random(
+                    map::SCROLL_DELTA,
+                    map::LOCAL_MAP_WIDTH - map::SCROLL_DELTA - 1);
         let y = cur_map.LocalMapTop
-              + map::random(map::SCROLL_DELTA,
-                            map::LOCAL_MAP_HEIGHT - map::SCROLL_DELTA - 1);
+              + map::random(
+                    map::SCROLL_DELTA,
+                    map::LOCAL_MAP_HEIGHT - map::SCROLL_DELTA - 1);
         if map::FreeTile(cur_map.Cells[x as usize][y as usize].Tile) {
             break (x, y)
         };
     };
-    hero.x = coords.0;
-    hero.y = coords.1;
+    hero.x = coords.0 as u32;
+    hero.y = coords.1 as u32;
     unsafe {
         CURSOR.x = hero.x - cur_map.LocalMapLeft;
         CURSOR.y = hero.y - cur_map.LocalMapTop;
@@ -88,7 +90,7 @@ pub fn InitHeroes() {
     };
 }
 
-pub fn SetHeroVisible(HeroNum: i32) {
+pub fn SetHeroVisible(HeroNum: u32) {
     let hero: &mut THero = get_mut_ref_curhero!(HeroNum);
     let cur_map: &mut map::TMap = get_mut_ref_curmap!();
     for x in max(0, hero.x - hero.VisLong)..min(map::MAP_WIDTH, hero.x + hero.VisLong + 1) {
@@ -102,7 +104,7 @@ pub fn IncHP(mut app: &mut low_level::Cursive, hero: &mut THero, dam: i32) {
     hero.HP = max(0, hero.HP + dam);
     if hero.HP <= 0 {
         low_level::HeroDied(&mut app);
-    } else if hero.HP > hero.MaxHP {
-        hero.HP = hero.MaxHP;
+    } else if hero.HP > hero.MaxHP as i32 {
+        hero.HP = hero.MaxHP as i32;
     }
 }
