@@ -5,6 +5,7 @@
 #![allow(dead_code)]
 #![allow(unused_variables)]
 
+use game_item;
 use low_level;
 use std::cmp::{min, max};
 
@@ -19,10 +20,10 @@ pub enum Direction {
 
 // `LOCAL_MAP_WIDTH` and `LOCAL_MAP_HEIGHT` must be divisible by 2 and 3 without residue!
 // Otherwise happy debugging ;)
-pub const LOCAL_MAP_WIDTH: u32 = 39;//78;
-pub const LOCAL_MAP_HEIGHT: u32 = 24;//48;
+pub const LOCAL_MAP_WIDTH: u32 = 78;
+pub const LOCAL_MAP_HEIGHT: u32 = 48;
 
-const MAP_BORDER: u32 = 3;
+const MAP_BORDER: u32 = 2;
 
 pub const MAP_WIDTH: u32 = LOCAL_MAP_WIDTH*2 + MAP_BORDER*2;
 pub const MAP_HEIGHT: u32 = LOCAL_MAP_HEIGHT*2 + MAP_BORDER*2;
@@ -44,7 +45,7 @@ pub const tileLast: Tile = tileFirstStopTile + 1;
 pub const TrapTileSet: [Tile; 1usize] = [tileTrap; 1usize];
 pub const LiveTileSet: [Tile; 1usize] = [tileLive; 1usize];
 
-const MaxDungeonLevel: u32 = 7;
+pub const MaxDungeonLevel: u32 = 7;
 
 pub const SCROLL_DELTA: u32 = 3;
 
@@ -96,6 +97,7 @@ pub static mut CUR_MAP: u32 = 0;
 pub fn MapGeneration(MapLevel: u32) {
     unsafe { CUR_MAP = MapLevel; }
     let cur_map = get_mut_ref_curmap!();
+    let mut n = 0u32;
     for x in 0..MAP_WIDTH {
         for y in 0..MAP_HEIGHT {
             let mut cell = get_mut_ref_cell!(x, y);
@@ -119,8 +121,24 @@ pub fn MapGeneration(MapLevel: u32) {
                         cell.Tile = tileLive;
                     }
                 }
+
+                if FreeTile(get_ref_cell!(x, y).Tile) {
+                    if random(0, 50) == 0 {
+                        if n < game_item::MaxItems as u32 {
+                            unsafe {
+                                game_item::ITEMS[n as usize] = game_item::ItemTypes[random(0, game_item::MaxItemTypes) as usize];
+                                game_item::ITEMS[n as usize].x = x;
+                                game_item::ITEMS[n as usize].y = y;
+                                game_item::ITEMS[n as usize].IsVisible = true;
+                            }
+                        }
+                        n += 1;
+                    }
+                }
+
             };
-            cell.IsVisible = true;
+            // All cells is invisible by default.
+            cell.IsVisible = false;
         }
     }
 

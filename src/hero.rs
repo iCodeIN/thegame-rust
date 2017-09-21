@@ -1,6 +1,7 @@
 use low_level;
 use map;
 use tables;
+use texts;
 use std::cmp::{min, max};
 
 const MaxChars: u32 = 4;
@@ -9,16 +10,16 @@ const chrDEX: u32 = 1;
 const chrCON: u32 = 2;
 const chrIQ: u32 = 3;
 
-const MaxSkills: u32 = 2;
-const skillHandWeapon: u32 = 0;
-const skillTrapSearch: u32 = 1; 
+pub const MaxSkills: u32 = 2;
+pub const skillHandWeapon: usize = 0;
+pub const skillTrapSearch: usize = 1; 
 
 pub struct THero {
     pub Chars: [u32; MaxChars as usize],
     pub Skills: [u32; MaxSkills as usize],
     pub x: u32,
     pub y: u32,
-    pub HP: i32,
+    pub HP: u32,
     pub MaxHP: u32,
     pub Exp: u32,
     pub MaxExp: u32,
@@ -50,13 +51,13 @@ fn InitHero(HeroNum: u32) {
     for i in 0..MaxChars {
         hero.Chars[i as usize] = 0;
     }
-    for j in 0..MaxSkills {
-        hero.Skills[j as usize] = 0;
+    for j in 0..MaxSkills as usize {
+        hero.Skills[j] = tables::BaseSkill_Table[j];
     }
 
     hero.Level = 0;
     hero.MaxHP = tables::HPLevel_Table[hero.Level as usize];
-    hero.HP = hero.MaxHP as i32;
+    hero.HP = hero.MaxHP;
     hero.Exp = 0;
     hero.MaxExp = tables::ExpLevel_Table[hero.Level as usize];
     hero.VisLong = 2;
@@ -100,11 +101,47 @@ pub fn SetHeroVisible(HeroNum: u32) {
     }
 }
 
-pub fn IncHP(mut app: &mut low_level::Cursive, hero: &mut THero, dam: i32) {
-    hero.HP = max(0, hero.HP + dam);
-    if hero.HP <= 0 {
+pub fn SkillTest(app: &mut low_level::Cursive, H: &mut THero, skl: usize ) -> bool {
+    if map::random(0, 100) > H.Skills[skl] { return false }
+    match skl {
+        skillTrapSearch => {
+            low_level::ShowInfo(app, texts::STR_TRAPOK.to_owned());
+            let H_Level = H.Level;
+            IncXP(app, H, 
+                  max(1, H_Level + map::random(0, H_Level + 1)));
+            SuccessSkillTest(app, H, skillTrapSearch)
+        },
+        _ => unreachable!()
+    };
+    true
+}
+
+fn SuccessSkillTest(app: &mut low_level::Cursive, H:  &mut THero, skl: usize) {
+    match skl {
+        skillTrapSearch => {
+            let rnd = f32::round(20./100.*map::MaxDungeonLevel as f32) as u32;
+            if map::random(0, 100) + 1 <= rnd {
+                low_level::ShowInfo(app, texts::STR_TRAPSKILL_OK.into());
+                H.Skills[skillTrapSearch] += 1; 
+            }
+        },
+        _ => unreachable!()
+    };
+}
+
+pub fn DecHP(mut app: &mut low_level::Cursive, hero: &mut THero, dam: u32) {
+    hero.HP = if hero.HP >= dam {hero.HP - dam} else {0};
+    if hero.HP == 0 {
         low_level::HeroDied(&mut app);
-    } else if hero.HP > hero.MaxHP as i32 {
-        hero.HP = hero.MaxHP as i32;
     }
+}
+
+pub fn IncHP(app: &mut low_level::Cursive, hero: &mut THero, inc: u32) {
+    hero.HP = min(hero.HP + inc, hero.MaxHP);
+}
+
+pub fn IncXP(app: &mut low_level::Cursive, H: &mut THero, axp: u32) {
+    H.Exp = min(H.Exp + axp, H.MaxExp);
+    low_level::ShowInfo(app, texts::STR_ADD_EXP.to_owned()
+                        + &axp.to_string() + " points");
 }

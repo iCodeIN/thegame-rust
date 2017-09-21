@@ -1,3 +1,4 @@
+pub const STR_HERO_EXP: &str = "Experience: ";
 pub const STR_HERO_HP: &str = "Health/Max Health: ";
 pub const STR_HERO_XY: &str = "Coordinates: ";
 
@@ -47,3 +48,13 @@ pub fn help() -> String {
              STR_MONSTER7
     )
 }
+
+pub const STR_AXE: &str = "Axe";
+pub const STR_SWORD: &str = "Sword";
+pub const STR_BODYARMOR: &str = "Bodyarmor";
+pub const STR_HELM: &str = "Helm";
+
+
+pub const STR_TRAPOK: &str = "You have neutralized a trap!";
+pub const STR_ADD_EXP: &str = "You increased your experience by ";
+pub const STR_TRAPSKILL_OK: &str = "Your skill of neutralizing traps is increased.";

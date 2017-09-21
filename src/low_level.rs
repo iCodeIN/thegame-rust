@@ -2,6 +2,7 @@ use std::fs::OpenOptions;
 use std::io::Write;
 
 use game;
+use game_item;
 use hero;
 use map;
 use monster;
@@ -72,6 +73,11 @@ pub const MonsterRecords: [TTileRecord; monster::MaxMonsterTypes as usize] = [
     TTileRecord {C: 'A', Clr: Color::LightBlue},
 ];
 
+pub const ItemRecords: [TTileRecord; 2] = [
+    TTileRecord {C: '>', Clr: Color::LightCyan},
+    TTileRecord {C: '[', Clr: Color::LightGreen}
+];
+
 pub fn InitApp(app: &mut Cursive) {
     create_init_screen(app);
 }
@@ -123,7 +129,8 @@ pub fn create_main_screen(app: &mut Cursive) {
                 .child(
                     TextView::empty()
                         .with_id("hero_info")
-                        .fixed_size((24, map::LOCAL_MAP_HEIGHT - 5 - 1 - 5 - 1 - 9)))
+                        .fixed_size(
+                            (24, map::LOCAL_MAP_HEIGHT - 5 - 1 - 5 - 1 - 9)))
                 .child(Dialog::around(TextView::new(texts::HELP_EXIT_DIALOG))
                     .button("Help", |a| a.add_layer(
                         Dialog::info(texts::help())))
@@ -161,6 +168,12 @@ pub fn create_main_screen(app: &mut Cursive) {
     app.add_global_callback( 's',        |a| move_cursor(a, Down));
     app.add_global_callback( 'a',        |a| move_cursor(a, Left));
     app.add_global_callback( 'd',        |a| move_cursor(a, Right));
+    // Special for Russian keyboard layout.
+    app.add_global_callback( 'ц',        |a| move_cursor(a, Up));
+    app.add_global_callback( 'ы',        |a| move_cursor(a, Down));
+    app.add_global_callback( 'ф',        |a| move_cursor(a, Left));
+    app.add_global_callback( 'в',        |a| move_cursor(a, Right));
+    
     app.add_global_callback( ' ',        |a| {});
 }
 
@@ -178,8 +191,8 @@ fn create_init_screen(app: &mut Cursive) {
             .fixed_size((width, height)))
         .fixed_size((width, height*2 + 4)))
         .title("THE GAME")
-        .button("Start", |mut a| {game::GenerateAll();
-                              game::StartGame(&mut a);})
+        .button("Start", |mut a| { game::GenerateAll();
+                                   game::StartGame(&mut a);})
         .button("Quit", |a| a.quit())
         .with_id("init"));
 
@@ -191,8 +204,8 @@ fn create_init_screen(app: &mut Cursive) {
     for i in 0..width*height {
         bottom.append_content(["^", ":", "."][map::random(0, 3) as usize]);
     }
-    app.add_global_callback(' ', |mut a| {game::GenerateAll();
-                                      game::StartGame(&mut a);});
+    app.add_global_callback(' ', |mut a| { game::GenerateAll();
+                                           game::StartGame(&mut a);});
 
     app.add_global_callback( Key::Esc,   |a| a.quit());
 }
@@ -208,10 +221,29 @@ pub fn ShowCell(app: &mut Cursive, t: &map::TMapCell, x: u32, y: u32) {
         .get_content()
         .to_owned();
     let cur_map = get_ref_curmap!();
-    let index = ((map::LOCAL_MAP_WIDTH + 1)*(y - cur_map.LocalMapTop) + (x - cur_map.LocalMapLeft)) as usize;
+    let index = ((map::LOCAL_MAP_WIDTH+1)*(y-cur_map.LocalMapTop)
+                +(x-cur_map.LocalMapLeft)) as usize;
     text.remove(index);
     text.insert(index,
         if t.IsVisible {c} else {' '});
+    app.find_id::<TextView>("area").unwrap().set_content(text);
+}
+
+pub fn ShowItem(app: &mut Cursive, itm: &game_item::TGameItem) {
+    use game_item::TGameItemType::*;
+    let mut text: String = app.find_id::<TextView>("area")
+        .unwrap()
+        .get_content()
+        .to_owned();
+    let cur_map = get_ref_curmap!();
+    let index = ((map::LOCAL_MAP_WIDTH+1)*(itm.y-cur_map.LocalMapTop)
+                +(itm.x-cur_map.LocalMapLeft)) as usize;
+    text.remove(index);
+    text.insert(index,
+                ItemRecords[match itm.IType {
+                        ItemHandWeapon => 0,
+                        ItemArmor => 1
+                    } as usize].C);
     app.find_id::<TextView>("area").unwrap().set_content(text);
 }
 
@@ -232,8 +264,10 @@ pub fn ShowHeroInfo(app: &mut Cursive, HeroNum: u32) {
     let hero: &hero::THero = get_ref_curhero!(HeroNum);
     app.find_id::<TextView>("hero_info")
         .unwrap()
-        .set_content(
-            texts::STR_HERO_HP.to_owned()
+        .set_content(texts::STR_HERO_EXP.to_owned()
+            + &hero.Exp.to_string()
+            + "\n"
+            + &texts::STR_HERO_HP.to_owned()
             + &hero.HP.to_string()
             + "/"
             + &hero.MaxHP.to_string()
@@ -378,21 +412,24 @@ fn move_cursor(mut app: &mut Cursive, direction: map::Direction) {
         //ShowInfo(&mut app, CURSOR.x.to_string() + "-" + &CURSOR.y.to_string());
         if prev_x != CURSOR.x || prev_y != CURSOR.y {
             let cur_cell = get_mut_ref_cell_wo_unsafe!(hero.x, hero.y);
+
             for trap in map::TrapTileSet.iter() {
                 if &cur_cell.Tile == trap {
                     cur_cell.Tile = map::tileGrass;
-                    let dam = (map::random(0, hero.MaxHP as u32) + 1) as i32;//f32::round(hero.MaxHP * 1.1)) + 1;
-                    ShowInfo(app, String::from(texts::STR_TRAP)
-                                  + "(-"
-                                  + &dam.abs().to_string()
-                                  + " points)");
-                    hero::IncHP(app, hero, -dam);
+                    if !hero::SkillTest(app, hero, hero::skillTrapSearch) {
+                        let dam = map::random(0, hero.MaxHP) + 1;//f32::round(hero.MaxHP * 1.1)) + 1;
+                        ShowInfo(app, String::from( texts::STR_TRAP)
+                                                  + "(-"
+                                                  + &dam.to_string()
+                                                  + " points)");
+                        hero::DecHP(app, hero, dam);
+                    }
                 }
             }
             for live in map::LiveTileSet.iter() {
                 if &cur_cell.Tile == live {
                     ShowInfo(app, String::from(texts::STR_LIVE));
-                    let inc = hero.MaxHP as i32;
+                    let inc = hero.MaxHP;
                     hero::IncHP(app, hero, inc);
                 }
             }

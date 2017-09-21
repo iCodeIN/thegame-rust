@@ -1,3 +1,5 @@
+use hero;
+
 const MaxPlayerLevel: u32 = 8;
 
 pub const ExpLevel_Table: [u32; MaxPlayerLevel as usize] = [
@@ -6,4 +8,9 @@ pub const ExpLevel_Table: [u32; MaxPlayerLevel as usize] = [
 
 pub const HPLevel_Table: [u32; MaxPlayerLevel as usize] = [
     10, 20, 30, 50, 80, 130, 210, 340
+];
+
+// percents
+pub const BaseSkill_Table: [u32; hero::MaxSkills as usize] = [
+    30, 20
 ];
