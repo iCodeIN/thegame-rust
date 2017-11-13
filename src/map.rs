@@ -1,3 +1,5 @@
+//! This module describes a game map.
+
 #![allow(unused_variables)]
 #![allow(unused_mut)]
 #![allow(non_snake_case)]
@@ -5,9 +7,13 @@
 #![allow(dead_code)]
 #![allow(unused_variables)]
 
+use cursive;
 use game_item;
 use low_level;
 use std::cmp::{min, max};
+
+use decorators::decorators;
+use loggers::{logger, log};
 
 //-------------------------------Constants------------------------------------//
 
@@ -18,15 +24,15 @@ pub enum Direction {
     Down
 }
 
-// `LOCAL_MAP_WIDTH` and `LOCAL_MAP_HEIGHT` must be divisible by 2 and 3 without residue!
+// `LOCAL_MAP_WIDTH` and `LOCAL_MAP_HEIGHT` must be divisible by 6 without residue!
 // Otherwise happy debugging ;)
-pub const LOCAL_MAP_WIDTH: u32 = 78;
-pub const LOCAL_MAP_HEIGHT: u32 = 48;
+pub const LOCAL_MAP_WIDTH: usize = 78;
+pub const LOCAL_MAP_HEIGHT: usize = 48;
 
-const MAP_BORDER: u32 = 2;
+const MAP_BORDER: usize = 2;
 
-pub const MAP_WIDTH: u32 = LOCAL_MAP_WIDTH*2 + MAP_BORDER*2;
-pub const MAP_HEIGHT: u32 = LOCAL_MAP_HEIGHT*2 + MAP_BORDER*2;
+pub const MAP_WIDTH: usize = LOCAL_MAP_WIDTH*2 + MAP_BORDER*2;
+pub const MAP_HEIGHT: usize = LOCAL_MAP_HEIGHT*2 + MAP_BORDER*2;
 
 type Tile = u32;
 
@@ -45,9 +51,9 @@ pub const tileLast: Tile = tileFirstStopTile + 1;
 pub const TrapTileSet: [Tile; 1usize] = [tileTrap; 1usize];
 pub const LiveTileSet: [Tile; 1usize] = [tileLive; 1usize];
 
-pub const MaxDungeonLevel: u32 = 7;
+pub const MaxDungeonLevel: usize = 7;
 
-pub const SCROLL_DELTA: u32 = 3;
+pub const SCROLL_DELTA: usize = 2;
 
 //-------------------------------Data types-----------------------------------//
 
@@ -68,8 +74,8 @@ impl Clone for TMapCell {
 type Cells = [[TMapCell; MAP_HEIGHT as usize]; MAP_WIDTH as usize];
 pub struct TMap {
     pub Cells: Cells,
-    pub LocalMapLeft: u32,
-    pub LocalMapTop: u32
+    pub LocalMapLeft: usize,
+    pub LocalMapTop: usize
 }
 
 impl Copy for TMap {}
@@ -90,14 +96,15 @@ pub static mut GAME_MAP: TGameMap = [
         LocalMapLeft: 0,
         LocalMapTop: 0
     }; MaxDungeonLevel as usize];
-pub static mut CUR_MAP: u32 = 0;
+pub static mut CUR_MAP: usize = 0;
 
 //-------------------------------Functions------------------------------------//
 
-pub fn MapGeneration(MapLevel: u32) {
+#[decorators(logger("MapGeneration"))]
+pub fn MapGeneration(MapLevel: usize) {
     unsafe { CUR_MAP = MapLevel; }
     let cur_map = get_mut_ref_curmap!();
-    let mut n = 0u32;
+    let mut n = 0usize;
     for x in 0..MAP_WIDTH {
         for y in 0..MAP_HEIGHT {
             let mut cell = get_mut_ref_cell!(x, y);
@@ -114,7 +121,7 @@ pub fn MapGeneration(MapLevel: u32) {
                 } else {
                     cell.Tile = tileGround;
                 }
-                if random(0, 100) == 0 {
+                if random(0, 50) == 0 {
                     if random(0, 2) == 0 {
                         cell.Tile = tileTrap;
                     } else {
@@ -122,14 +129,14 @@ pub fn MapGeneration(MapLevel: u32) {
                     }
                 }
 
-                if FreeTile(get_ref_cell!(x, y).Tile) {
-                    if random(0, 50) == 0 {
-                        if n < game_item::MaxItems as u32 {
+                if FreeTile(&get_ref_cell!(x, y).Tile) {
+                    if random(0, 100) == 0 {
+                        if n < game_item::MaxItems {
                             unsafe {
-                                game_item::ITEMS[n as usize] = game_item::ItemTypes[random(0, game_item::MaxItemTypes) as usize];
-                                game_item::ITEMS[n as usize].x = x;
-                                game_item::ITEMS[n as usize].y = y;
-                                game_item::ITEMS[n as usize].IsVisible = true;
+                                game_item::ITEMS[n] = game_item::ItemTypes[random(0, game_item::MaxItemTypes) as usize];
+                                game_item::ITEMS[n].x = x;
+                                game_item::ITEMS[n].y = y;
+                                game_item::ITEMS[n].IsVisible = true;
                             }
                         }
                         n += 1;
@@ -141,24 +148,24 @@ pub fn MapGeneration(MapLevel: u32) {
             cell.IsVisible = false;
         }
     }
-
+log("Intermediate point").unwrap();
     cur_map.LocalMapLeft = MAP_WIDTH/3;
     cur_map.LocalMapTop = MAP_HEIGHT/3;
 
     if MapLevel < MaxDungeonLevel {
         for i in 0..2 {
             let (x, y) = FreeMapPoint(&cur_map);
-            cur_map.Cells[x as usize][y as usize].Tile = tileStairsDown;
+            cur_map.Cells[x][y].Tile = tileStairsDown;
         }
     };
 
     if MapLevel > 1 {
         let (x, y) = FreeMapPoint(&cur_map);
-        cur_map.Cells[x as usize][y as usize].Tile = tileStairsUp;
+        cur_map.Cells[x][y].Tile = tileStairsUp;
     };
 }
 
-pub fn ShowMap(app: &mut low_level::Cursive) {
+pub fn ShowMap(app: &mut cursive::Cursive) {
     let cur_map = get_ref_curmap!();
     low_level::PrepareMap();
     for x in cur_map.LocalMapLeft..cur_map.LocalMapLeft + LOCAL_MAP_WIDTH  {
@@ -174,14 +181,14 @@ pub fn ScrollMap(direction: Direction) {
         cur_map.LocalMapLeft, cur_map.LocalMapTop);
     match direction {
         Direction::Left => {
-            new_local_map_left = max(0, cur_map.LocalMapLeft as i32 - (LOCAL_MAP_WIDTH/2) as i32) as u32;
+            new_local_map_left = max(0, cur_map.LocalMapLeft as i32 - (LOCAL_MAP_WIDTH/2) as i32) as usize;
         },
         Direction::Right => {
             new_local_map_left = min(MAP_WIDTH - LOCAL_MAP_WIDTH,
                                        cur_map.LocalMapLeft + LOCAL_MAP_WIDTH/2);
         },
         Direction::Up => {
-            new_local_map_top = max(0, cur_map.LocalMapTop as i32 - (LOCAL_MAP_HEIGHT/2) as i32) as u32;
+            new_local_map_top = max(0, cur_map.LocalMapTop as i32 - (LOCAL_MAP_HEIGHT/2) as i32) as usize;
         },
         Direction::Down => {
             new_local_map_top = min(MAP_HEIGHT - LOCAL_MAP_HEIGHT,
@@ -198,28 +205,56 @@ pub fn ScrollMap(direction: Direction) {
     }
 }
 
-pub fn random(start: u32, end: u32) -> u32 {
+/// Generates a number from a range from `start` to `end` not including `end`.
+///
+/// # Examples
+///
+/// ```
+/// random(0, 5); // -> 0 or 1 or 2 or 3 or 4
+/// ```
+pub fn random(start: usize, end: usize) -> usize {
     use rand::{thread_rng, sample};
-       let mut rng = thread_rng();
+    if end <= start { panic!("End={} should be more than Start={}", end, start) };
+    let mut rng = thread_rng();
     sample(&mut rng, start..end, 1)[0]
 }
 
-pub fn FreeTile(tile: Tile) -> bool {
-    tile < tileFirstStopTile
+/// Checks the possibility of passing through a map cell.
+///
+/// # Examples
+///
+/// ```
+/// FreeTile(tileLive); // -> true
+/// ```
+pub fn FreeTile(tile: &Tile) -> bool {
+    tile < &tileFirstStopTile
 }
 
-pub fn FreeMapPoint(cur_map: &TMap) -> (u32, u32) {
+/// Looks up and returns coordinates of a first available free map cell.
+///
+/// # Examples
+///
+/// ```
+/// let (x, y) = FreeMapPoint(get_ref_curmap!());
+/// ```
+pub fn FreeMapPoint(cur_map: &TMap) -> (usize, usize) {
     loop {
         let (x, y) = (
             random(MAP_BORDER, MAP_WIDTH - MAP_BORDER - 1),
             random(MAP_BORDER, MAP_HEIGHT - MAP_BORDER - 1)
         );
-        if FreeTile(cur_map
-            .Cells[x as usize][y as usize].Tile) {break (x, y)};
+        if FreeTile(&cur_map.Cells[x][y].Tile) {break (x, y)};
     }
 }
 
-pub fn VisiblePoint(x: u32, y: u32) -> bool {
+/// Checks a location of a map cell with the `x` and `y` coordinates in the visible part of a map.
+///
+/// # Examples
+///
+/// ```
+/// VisiblePoint(5, 7); // -> bool
+/// ```
+pub fn VisiblePoint(x: usize, y: usize) -> bool {
     let cur_map = get_ref_curmap!();
     get_ref_cell!(x, y).IsVisible
         && x >= cur_map.LocalMapLeft

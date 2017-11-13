@@ -1,7 +1,9 @@
+//! This module describes any game items such as artifacts, amulets, etc.
+
 use texts;
 
-const MaxItemInt: u32 = 20;
-const MaxRealInt: u32 = 20; 
+const MaxItemInt: usize = 20;
+const MaxRealInt: usize = 20; 
 
 #[derive(Debug)]
 pub enum TGameItemType {
@@ -19,12 +21,12 @@ impl Clone for TGameItemType {
 
 pub struct TGameItem<'tgi> {
     ID: u32,
-    pub x: u32,
-    pub y: u32,
-    pub IType: TGameItemType,
-    Name : &'tgi str,
-    Ints : [u32; MaxItemInt as usize],
-    Reals: [f32; MaxRealInt as usize],
+    pub x: usize,
+    pub y: usize,
+    pub IType: Option<TGameItemType>,
+    pub Name : &'tgi str,
+    Ints : [Option<u32>; MaxItemInt],
+    Reals: [Option<f32>; MaxRealInt],
     pub IsVisible: bool
 }
 
@@ -36,54 +38,58 @@ impl<'tgi> Clone for TGameItem<'tgi> {
     }
 }
 
-const intAttack_d1: u32    = 0;
-const intAttack_d2: u32    = 1;
-const intAttackHit: u32    = 2;
+const intAttack_d1: usize  = 0;
+const intAttack_d2: usize  = 1;
+const intAttackHit: usize  = 2;
 const intArmorDefence: u32 = 0;
 
-pub const MaxItemTypes: u32 = 4;
+pub const MaxItemTypes: usize = 4;
 type Items<'tgi> = [TGameItem<'tgi>; MaxItemTypes as usize];
 pub const ItemTypes: Items = [
     TGameItem {
         ID: 0,
         x: 0,
         y: 0,
-        IType: TGameItemType::ItemHandWeapon,
+        IType: Some(TGameItemType::ItemHandWeapon),
         Name : texts::STR_AXE,
         // [intAttack_d1, intAttack_d2, intAttackHit(in percents), ...]
-        Ints : [1u32,6,50,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-        Reals: [0.0; 20],
+        Ints : [Some(1u32),Some(6),Some(50),None,None,None,None,None,None,None,
+                None,None,None,None,None,None,None,None,None,None],
+        Reals: [None; MaxRealInt],
         IsVisible: false
     },
     TGameItem {
         ID: 1,
         x: 0,
         y: 0,
-        IType: TGameItemType::ItemHandWeapon,
+        IType: Some(TGameItemType::ItemHandWeapon),
         Name : texts::STR_SWORD,
-        Ints : [2u32,4,80,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-        Reals: [0.0; 20],
+        Ints : [Some(2u32),Some(4),Some(80),None,None,None,None,None,None,None,
+                None,None,None,None,None,None,None,None,None,None],
+        Reals: [None; MaxRealInt],
         IsVisible: false
     },
     TGameItem {
         ID: 2,
         x: 0,
         y: 0,
-        IType: TGameItemType::ItemArmor,
+        IType: Some(TGameItemType::ItemArmor),
         Name : texts::STR_AXE,
-        Ints : [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-        Reals: [0.0; 20],
+        Ints : [Some(1u32),None,None,None,None,None,None,None,None,None,None,
+                None,None,None,None,None,None,None,None,None],
+        Reals: [None; MaxRealInt],
         IsVisible: false
     },
     TGameItem {
         ID: 3,
         x: 0,
         y: 0,
-        IType: TGameItemType::ItemArmor,
+        IType: Some(TGameItemType::ItemArmor),
         Name : texts::STR_AXE,
         // [intArmorDefence, ...]
-        Ints : [5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-        Reals: [0.0; 20],
+        Ints : [Some(5u32),None,None,None,None,None,None,None,None,None,None,
+                None,None,None,None,None,None,None,None,None],
+        Reals: [None; MaxRealInt],
         IsVisible: false
     },
 ];
@@ -94,11 +100,11 @@ pub static mut ITEMS: [TGameItem; MaxItems] = [
         ID: 0,
         x: 0,
         y: 0,
-        IType: TGameItemType::ItemHandWeapon,
+        IType: Some(TGameItemType::ItemHandWeapon),
         Name : texts::STR_AXE,
         // [intAttack_d1, intAttack_d2, intAttackHit(in percents), ...]
-        Ints : [0u32,0,50,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-        Reals: [0.0; 20],
+        Ints : [None; MaxItemInt],
+        Reals: [None; MaxRealInt],
         IsVisible: false
     }; MaxItems
 ];

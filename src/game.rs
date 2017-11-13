@@ -1,16 +1,21 @@
+use cursive;
 use game_item;
 use hero;
 use low_level;
 use map;
 use monster;
 
+
+use decorators::decorators;
+use loggers::{logger, log}; 
+
 pub fn GenerateAll() {
     map::MapGeneration(0);
     monster::GenerateMonsters();
 }
 
-pub fn ShowItems(app: &mut low_level::Cursive) {
-    for i in 0..game_item::MaxItems as usize {
+pub fn ShowItems(app: &mut cursive::Cursive) {
+    for i in 0..game_item::MaxItems {
         unsafe {
             if map::VisiblePoint(game_item::ITEMS[i].x, game_item::ITEMS[i].y) {
                 low_level::ShowItem(app, &game_item::ITEMS[i]);
@@ -19,7 +24,7 @@ pub fn ShowItems(app: &mut low_level::Cursive) {
     }
 }
 
-pub fn ShowGame(app: &mut low_level::Cursive) {
+pub fn ShowGame(app: &mut cursive::Cursive) {
     map::ShowMap(app);
     ShowItems(app);
     monster::ShowMonsters(app);
@@ -30,7 +35,7 @@ pub fn ShowGame(app: &mut low_level::Cursive) {
     }
 }
 
-pub fn StartGame(app: &mut low_level::Cursive) {
+pub fn StartGame(app: &mut cursive::Cursive) {
     app.pop_layer();
     low_level::create_main_screen(app);
     hero::InitHeroes();

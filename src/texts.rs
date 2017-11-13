@@ -1,3 +1,5 @@
+//! This module describes all text information showing in the game.
+
 pub const STR_HERO_EXP: &str = "Experience: ";
 pub const STR_HERO_HP: &str = "Health/Max Health: ";
 pub const STR_HERO_XY: &str = "Coordinates: ";
@@ -16,9 +18,9 @@ pub const STR_LIVE: &str = "You regained your hero's health in the Source!";
 pub const STR_HERO_DIED: &str = "Hero dies!";
 
 pub const INIT_DIALOG: &str = "Select `Start` or press <Space> key to start playing.\
-                               \nSelect `Quit` to exit.";
+                               \nSelect `Quit` or press <Esc> key to exit.";
 pub const HELP_EXIT_DIALOG: &str = "Select `Help`to get help.\n\
-                              Select `Quit` or press <Esc> key to exit.";
+                              Select `Quit` to exit.";
 
 pub fn help() -> String {
     format!("`@`: Hero (use <W-A-S-D> keys for moving)\n\
@@ -58,3 +60,6 @@ pub const STR_HELM: &str = "Helm";
 pub const STR_TRAPOK: &str = "You have neutralized a trap!";
 pub const STR_ADD_EXP: &str = "You increased your experience by ";
 pub const STR_TRAPSKILL_OK: &str = "Your skill of neutralizing traps is increased.";
+
+pub const STR_HERO_ITEMS: &str = "Hero's items:";
+pub const STR_EMPTY_ITEM: &str = "<empty>";

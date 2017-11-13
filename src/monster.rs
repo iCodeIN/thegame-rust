@@ -1,14 +1,31 @@
+//! This module describes Monsters.
+
+use cursive;
 use low_level;
 use map;
 use texts;
 
+use decorators::decorators;
+use loggers::{logger, log};
+
+/// Ladys and gentlmens, it is a monster!
+///
+/// `Ad1` and `Ad2` determines an attacking capabilities of a monster.
+/// For this we throw `Ad1` virtual dices with `Ad2` sides.
+/// Note, it's not real game dice, it's ok if dice has 3 sides, for example :)
+///
+/// `Dd1` and `Dd2` determines a thickness of a skin.
 pub struct TMonster<'tm> {
     pub Name: &'tm str,
     pub ID: u32,
-    pub x: u32,
-    pub y: u32,
+    /// Coordinate: `x`
+    pub x: usize,
+    /// Coordinate: `y`
+    pub y: usize,
+    /// Health
     pub HP: i32,
     pub MaxHP: i32,
+    /// Experience.
     pub XP: u32,
     pub Level: u32,
     pub Ad1: i32,
@@ -27,8 +44,8 @@ impl<'tm> Clone for TMonster<'tm> {
     }
 }
 
-pub const MaxMonsterTypes: u32 = 7;
-type Monsters<'tm> = [TMonster<'tm>; MaxMonsterTypes as usize];
+pub const MaxMonsterTypes: usize = 7;
+type Monsters<'tm> = [TMonster<'tm>; MaxMonsterTypes];
 pub const MonsterTypes: Monsters = [
     TMonster {
         Name: texts::STR_MONSTER1,
@@ -88,8 +105,9 @@ pub const MonsterTypes: Monsters = [
     }
 ];
 
-const MaxMonsters: u32 = (map::LOCAL_MAP_WIDTH + map::LOCAL_MAP_HEIGHT)*5/6;
-pub static mut MONSTERS: [TMonster; MaxMonsters as usize] = [
+/// The number of monsters depends on the size of the game map.
+const MaxMonsters: usize = ((map::LOCAL_MAP_WIDTH + map::LOCAL_MAP_HEIGHT)/6)*5;
+pub static mut MONSTERS: [TMonster; MaxMonsters] = [
     TMonster {
         Name: texts::STR_MONSTER1,
         ID: 1, x: 0, y: 0,
@@ -97,26 +115,28 @@ pub static mut MONSTERS: [TMonster; MaxMonsters as usize] = [
         Ad1: 1, Ad2: 3, Dd1: 1, Dd2: 2,
         ViewZone: 4,
         RandomStep: 3
-    }; MaxMonsters as usize
+    }; MaxMonsters
 ];
 
 pub fn GenerateMonsters() {
     let mut v = vec!();
     for mt in MonsterTypes.iter() {
-        if mt.Level == unsafe {map::CUR_MAP} { v.push(*mt); };
+        if mt.Level == unsafe {map::CUR_MAP as u32} {
+            v.push(*mt);
+        };
     }
     for i in 0..MaxMonsters - 1 {
-        let mut m: TMonster = v[map::random(0, v.len() as u32) as usize];
-        let (x, y) = map::FreeMapPoint(unsafe { &map::GAME_MAP[map::CUR_MAP as usize] });
+        let mut m: TMonster = v[map::random(0, v.len())];
+        let (x, y) = map::FreeMapPoint(get_ref_curmap!());
         m.x = x;
         m.y = y;
-        unsafe { MONSTERS[i as usize] = m; }
+        unsafe { MONSTERS[i] = m; }
     }
 }
 
-pub fn ShowMonsters(app: &mut low_level::Cursive) {
+pub fn ShowMonsters(app: &mut cursive::Cursive) {
     for i in 0..MaxMonsters - 1 {
-        let m = unsafe { &MONSTERS[i as usize] };
+        let m = unsafe { &MONSTERS[i] };
         if m.HP > 0 && map::VisiblePoint(m.x, m.y) {
             low_level::ShowMonster(app, &m);
         };

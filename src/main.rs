@@ -1,18 +1,30 @@
+//! `The Game` is the yet another rogue-like game.
+//!
+//! Author: virtuos86
+//!
+//! I use TurboPascal's naming convention ("camel-case"). It's OK =)
+
+#![feature(use_extern_macros)]
+#![feature(proc_macro)]
+
 #![allow(unused_variables)]
-//#![allow(unused_imports)]
+#![allow(unused_imports)]
 #![allow(non_snake_case)]
 #![allow(non_upper_case_globals)]
 #![allow(dead_code)]
-#![feature(drop_types_in_const)]
 
 extern crate rand;
 extern crate cursive;
 
+extern crate decorators;
+use decorators::decorators;
+
 #[macro_use]
-mod macros;
+mod macros; 
 mod game;
 mod game_item;
 mod hero;
+mod loggers;
 mod low_level;
 mod map;
 mod monster;
@@ -21,12 +33,8 @@ mod texts;
 
 fn main() {
     let mut app: cursive::Cursive = cursive::Cursive::new();
-    //theme::load_theme_file("theme.toml").unwrap();
-    match app.load_theme_file("../../src/theme.toml") {
-        Ok(theme) => (),
-        Err(err) => low_level::log(&format!(
-            "<Unable loading the current theme!>: \n{:?}", err))
-    };
+    app.load_theme_file("../../src/theme.toml")
+       .unwrap_or(());
     low_level::VideoInitialize();
     low_level::InitApp(&mut app);
     app.run();

@@ -1,5 +1,4 @@
-use std::fs::OpenOptions;
-use std::io::Write;
+use std;
 
 use game;
 use game_item;
@@ -15,24 +14,8 @@ use cursive::event::Key;
 use cursive::traits::*;
 use cursive::views::{TextView, Dialog, LinearLayout};
 
-const DEBUG: bool = true;
-
-pub fn log(message: &str) {
-    if !DEBUG {return};
-    let mut file = OpenOptions::new()
-        .append(true)
-        .create(true)
-        .open("log.txt")
-        .unwrap();
-    let mut message: String = message.to_owned();
-    message.push_str("\n\n=====================================================\
-                      ===========================\n\n");
-    match file.write_all(message.as_bytes()) {
-        Err(message) => panic!("<Error writing programm log!>"),
-        Ok(result) => ()
-    };
-    //file.sync_all();
-}
+use decorators::decorators;
+use loggers::{logger, log};
 
 pub enum Color {
     Green,
@@ -73,9 +56,10 @@ pub const MonsterRecords: [TTileRecord; monster::MaxMonsterTypes as usize] = [
     TTileRecord {C: 'A', Clr: Color::LightBlue},
 ];
 
-pub const ItemRecords: [TTileRecord; 2] = [
+pub const ItemRecords: [TTileRecord; 3] = [
     TTileRecord {C: '>', Clr: Color::LightCyan},
-    TTileRecord {C: '[', Clr: Color::LightGreen}
+    TTileRecord {C: '[', Clr: Color::LightGreen},
+    TTileRecord {C: 'e', Clr: Color::Black}
 ];
 
 pub fn InitApp(app: &mut Cursive) {
@@ -164,6 +148,7 @@ pub fn create_main_screen(app: &mut Cursive) {
     app.add_global_callback( Key::Down,  |a| move_cursor(a, Down));
     app.add_global_callback( Key::Left,  |a| move_cursor(a, Left));
     app.add_global_callback( Key::Right, |a| move_cursor(a, Right));
+    app.add_global_callback( 'i',        |a| ShowHeroItems(a));
     app.add_global_callback( 'w',        |a| move_cursor(a, Up));
     app.add_global_callback( 's',        |a| move_cursor(a, Down));
     app.add_global_callback( 'a',        |a| move_cursor(a, Left));
@@ -192,7 +177,7 @@ fn create_init_screen(app: &mut Cursive) {
         .fixed_size((width, height*2 + 4)))
         .title("THE GAME")
         .button("Start", |mut a| { game::GenerateAll();
-                                   game::StartGame(&mut a);})
+                                   game::StartGame(&mut a); })
         .button("Quit", |a| a.quit())
         .with_id("init"));
 
@@ -205,24 +190,24 @@ fn create_init_screen(app: &mut Cursive) {
         bottom.append_content(["^", ":", "."][map::random(0, 3) as usize]);
     }
     app.add_global_callback(' ', |mut a| { game::GenerateAll();
-                                           game::StartGame(&mut a);});
+                                           game::StartGame(&mut a); });
 
-    app.add_global_callback( Key::Esc,   |a| a.quit());
+    app.add_global_callback( Key::Esc,   |a| { a.quit(); });
 }
 
-pub fn  VideoInitialize() {}
+pub fn VideoInitialize() {}
 
 pub fn PrepareMap() {}
 
-pub fn ShowCell(app: &mut Cursive, t: &map::TMapCell, x: u32, y: u32) {
+pub fn ShowCell(app: &mut Cursive, t: &map::TMapCell, x: usize, y: usize) {
     let c = TileRecords[t.Tile as usize].C;
     let mut text: String = app.find_id::<TextView>("area")
         .unwrap()
         .get_content()
         .to_owned();
     let cur_map = get_ref_curmap!();
-    let index = ((map::LOCAL_MAP_WIDTH+1)*(y-cur_map.LocalMapTop)
-                +(x-cur_map.LocalMapLeft)) as usize;
+    let index = (map::LOCAL_MAP_WIDTH+1)*(y-cur_map.LocalMapTop)
+                +(x-cur_map.LocalMapLeft);
     text.remove(index);
     text.insert(index,
         if t.IsVisible {c} else {' '});
@@ -236,18 +221,19 @@ pub fn ShowItem(app: &mut Cursive, itm: &game_item::TGameItem) {
         .get_content()
         .to_owned();
     let cur_map = get_ref_curmap!();
-    let index = ((map::LOCAL_MAP_WIDTH+1)*(itm.y-cur_map.LocalMapTop)
-                +(itm.x-cur_map.LocalMapLeft)) as usize;
+    let index = (map::LOCAL_MAP_WIDTH+1)*(itm.y-cur_map.LocalMapTop)
+                +(itm.x-cur_map.LocalMapLeft);
     text.remove(index);
     text.insert(index,
                 ItemRecords[match itm.IType {
-                        ItemHandWeapon => 0,
-                        ItemArmor => 1
+                        Some(ItemHandWeapon) => 0,
+                        Some(ItemArmor) => 1,
+                        None => 2
                     } as usize].C);
     app.find_id::<TextView>("area").unwrap().set_content(text);
 }
 
-pub fn ShowHero(app: &mut Cursive, HeroNum: u32) {
+pub fn ShowHero(app: &mut Cursive, HeroNum: usize) {
     let hero: &hero::THero = get_ref_curhero!(HeroNum);
     let mut text: String = app.find_id::<TextView>("area")
         .unwrap()
@@ -260,7 +246,7 @@ pub fn ShowHero(app: &mut Cursive, HeroNum: u32) {
     app.find_id::<TextView>("area").unwrap().set_content(text);
 }
 
-pub fn ShowHeroInfo(app: &mut Cursive, HeroNum: u32) {
+pub fn ShowHeroInfo(app: &mut Cursive, HeroNum: usize) {
     let hero: &hero::THero = get_ref_curhero!(HeroNum);
     app.find_id::<TextView>("hero_info")
         .unwrap()
@@ -277,6 +263,27 @@ pub fn ShowHeroInfo(app: &mut Cursive, HeroNum: u32) {
             + ", "
             + &hero.y.to_string()
         );
+}
+
+fn ShowHeroItems(app: &mut Cursive) {
+    let hero = get_ref_curhero!();
+    let mut text = String::from("");
+    text.push_str(texts::STR_HERO_ITEMS);
+    text.push_str("\n\n");
+    for i in 1..hero::MaxHeroItems + 1 {
+        match hero.Items[i] {
+            None => {
+                //text.push_str(&*(i.to_string() + ") " + &texts::STR_EMPTY_ITEM));
+                text.push_str("\n");
+            },
+            Some(item) => {
+                text.push_str(item.Name);
+                text.push_str("\n");
+            }
+        };
+    }
+    app.add_layer(Dialog::info(text));
+    game::ShowGame(app);
 }
 
 pub fn ShowMonster(app: &mut Cursive, m: &monster::TMonster) {
@@ -354,8 +361,8 @@ fn ShowCompassInfo(app: &mut Cursive, direction: map::Direction) {
 //------------------------------------------------------------------------------
 
 pub struct Cursor {
-    pub x: u32,
-    pub y: u32
+    pub x: usize,
+    pub y: usize
 }
 
 pub static mut CURSOR: Cursor = Cursor { x: 0, y: 0 };
@@ -389,25 +396,25 @@ fn move_cursor(mut app: &mut Cursive, direction: map::Direction) {
         }
 
         if !map::FreeTile(
-            cur_map.Cells[(hero.x as i32 + dx) as usize]
+            &cur_map.Cells[(hero.x as i32 + dx) as usize]
                 [(hero.y as i32 + dy) as usize].Tile) {
             return;
         }
 
         let (prev_x, prev_y) = (CURSOR.x, CURSOR.y);
         if dx >= 0 {
-            CURSOR.x += dx as u32;
-            hero.x   += dx as u32;
+            CURSOR.x += dx as usize;
+            hero.x   += dx as usize;
         } else {
-            CURSOR.x = (CURSOR.x as i32 + dx) as u32;
-            hero.x   = (hero.x as i32 + dx) as u32;
+            CURSOR.x = (CURSOR.x as i32 + dx) as usize;
+            hero.x   = (hero.x as i32 + dx) as usize;
         }
         if dy >= 0 {
-            CURSOR.y += dy as u32;
-            hero.y   += dy as u32;
+            CURSOR.y += dy as usize;
+            hero.y   += dy as usize;
         } else {
-            CURSOR.y = (CURSOR.y as i32 + dy) as u32;
-            hero.y   = (hero.y as i32 + dy) as u32;
+            CURSOR.y = (CURSOR.y as i32 + dy) as usize;
+            hero.y   = (hero.y as i32 + dy) as usize;
         }
         //ShowInfo(&mut app, CURSOR.x.to_string() + "-" + &CURSOR.y.to_string());
         if prev_x != CURSOR.x || prev_y != CURSOR.y {
@@ -417,12 +424,12 @@ fn move_cursor(mut app: &mut Cursive, direction: map::Direction) {
                 if &cur_cell.Tile == trap {
                     cur_cell.Tile = map::tileGrass;
                     if !hero::SkillTest(app, hero, hero::skillTrapSearch) {
-                        let dam = map::random(0, hero.MaxHP) + 1;//f32::round(hero.MaxHP * 1.1)) + 1;
+                        let dam = map::random(0, hero.MaxHP as usize) + 1;//f32::round(hero.MaxHP * 1.1)) + 1;
                         ShowInfo(app, String::from( texts::STR_TRAP)
                                                   + "(-"
                                                   + &dam.to_string()
                                                   + " points)");
-                        hero::DecHP(app, hero, dam);
+                        hero::DecHP(app, hero, dam as u32);
                     }
                 }
             }

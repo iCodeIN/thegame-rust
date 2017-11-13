@@ -1,10 +1,10 @@
-//----------------------------------Macros------------------------------------//
+//! A lot of macros for hiding ugly unsafe blocks by changing most useful global static variables.
 
 #[macro_export]
 macro_rules! get_ref_curmap {
     () => ({
         use map;
-        unsafe { &map::GAME_MAP[map::CUR_MAP as usize] }
+        unsafe { &map::GAME_MAP[map::CUR_MAP] }
     })
 }
 
@@ -12,7 +12,7 @@ macro_rules! get_ref_curmap {
 macro_rules! get_ref_curmap_wo_unsafe {
     () => ({
         use map;
-        &map::GAME_MAP[map::CUR_MAP as usize]
+        &map::GAME_MAP[map::CUR_MAP]
     })
 }
 
@@ -20,7 +20,7 @@ macro_rules! get_ref_curmap_wo_unsafe {
 macro_rules! get_mut_ref_curmap {
     () => ({
         use map;
-        unsafe { &mut map::GAME_MAP[map::CUR_MAP as usize] }
+        unsafe { &mut map::GAME_MAP[map::CUR_MAP] }
     })
 }
 
@@ -29,22 +29,19 @@ macro_rules! get_ref_cell {
     ( $x:ident, $y:ident ) => ({
         use map;
         unsafe {
-            &map::GAME_MAP[map::CUR_MAP as usize]
-                .Cells[$x as usize][$y as usize]
+            &map::GAME_MAP[map::CUR_MAP].Cells[$x][$y]
         }
     });
     ( $x:path, $y:path ) => ({
         use map;
         unsafe {
-            &map::GAME_MAP[map::CUR_MAP as usize]
-                .Cells[$x as usize][$y as usize]
+            &map::GAME_MAP[map::CUR_MAP].Cells[$x][$y]
         }
     });
     ( $x:expr, $y:expr ) => ({
         use map;
         unsafe {
-            &map::GAME_MAP[map::CUR_MAP as usize]
-                .Cells[$x as usize][$y as usize]
+            &map::GAME_MAP[map::CUR_MAP].Cells[$x][$y]
         }
     })
 }
@@ -53,15 +50,15 @@ macro_rules! get_ref_cell {
 macro_rules! get_mut_ref_cell_wo_unsafe {
     ( $x:ident, $y:ident ) => ({
         use map;
-        &mut map::GAME_MAP[map::CUR_MAP as usize].Cells[$x as usize][$y as usize]
+        &mut map::GAME_MAP[map::CUR_MAP].Cells[$x][$y]
     });
     ( $x:path, $y:path ) => ({
         use map;
-        &mut map::GAME_MAP[map::CUR_MAP as usize].Cells[$x as usize][$y as usize]
+        &mut map::GAME_MAP[map::CUR_MAP].Cells[$x][$y]
     });
     ( $x:expr, $y:expr ) => ({
         use map;
-        &mut map::GAME_MAP[map::CUR_MAP as usize].Cells[$x as usize][$y as usize]
+        &mut map::GAME_MAP[map::CUR_MAP].Cells[$x][$y]
     });
 }
 
@@ -70,8 +67,7 @@ macro_rules! get_mut_ref_cell {
     ( $x:ident, $y:ident ) => ({
         use map;
         unsafe {
-            &mut map::GAME_MAP[map::CUR_MAP as usize]
-                .Cells[$x as usize][$y as usize]
+            &mut map::GAME_MAP[map::CUR_MAP].Cells[$x][$y]
         }
     })
 }
@@ -81,19 +77,19 @@ macro_rules! get_ref_curhero {
     () => ({
         use hero;
         unsafe {
-            &hero::HEROES[hero::CUR_HERO as usize]
+            &hero::HEROES[hero::CUR_HERO]
         }
     });
     ( $HeroNum:path ) => ({
         use hero;
         unsafe {
-            &hero::HEROES[$HeroNum as usize]
+            &hero::HEROES[$HeroNum]
         }
     });
     ( $HeroNum:ident ) => ({
         use hero;
         unsafe {
-            &hero::HEROES[$HeroNum as usize]
+            &hero::HEROES[$HeroNum]
         }
     })
 }
@@ -103,19 +99,19 @@ macro_rules! get_mut_ref_curhero {
     () => ({
         use hero;
         unsafe {
-            &mut hero::HEROES[hero::CUR_HERO as usize]
+            &mut hero::HEROES[hero::CUR_HERO]
         }
     });
     ( $HeroNum:ident ) => ({
         use hero;
         unsafe {
-            &mut hero::HEROES[$HeroNum as usize]
+            &mut hero::HEROES[$HeroNum]
         }
     });
     ( $HeroNum:path ) => ({
         use hero;
         unsafe {
-            &mut hero::HEROES[$HeroNum as usize]
+            &mut hero::HEROES[$HeroNum]
         }
     })
 }
@@ -125,16 +121,16 @@ macro_rules! get_mut_ref_curhero_wo_unsafe {
     () => ({
         use hero;
         unsafe {
-            &mut hero::HEROES[hero::CUR_HERO as usize]
+            &mut hero::HEROES[hero::CUR_HERO]
         }
     });
     ( $HeroNum:ident ) => ({
         use hero;
-        &mut hero::HEROES[$HeroNum as usize]
+        &mut hero::HEROES[$HeroNum]
     });
     ( $HeroNum:path ) => ({
         use hero;
-        &mut hero::HEROES[$HeroNum as usize]
+        &mut hero::HEROES[$HeroNum]
     })
 }
 
