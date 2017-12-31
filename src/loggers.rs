@@ -8,7 +8,7 @@ const DEBUG: bool = true;
 
 pub fn log<S: Into<String>>(message: S) -> Result<()> {
     if !DEBUG { return Ok(()) };
-    let mut message: String = message.into().to_owned();
+    let mut message: String = message.into();
     message.push_str("\n\n=====================================================\
                       ===========================\n\n");
     OpenOptions::new()

@@ -74,7 +74,7 @@ pub const ItemTypes: Items = [
         x: 0,
         y: 0,
         IType: Some(TGameItemType::ItemArmor),
-        Name : texts::STR_AXE,
+        Name : texts::STR_HELM,
         Ints : [Some(1u32),None,None,None,None,None,None,None,None,None,None,
                 None,None,None,None,None,None,None,None,None],
         Reals: [None; MaxRealInt],
@@ -85,7 +85,7 @@ pub const ItemTypes: Items = [
         x: 0,
         y: 0,
         IType: Some(TGameItemType::ItemArmor),
-        Name : texts::STR_AXE,
+        Name : texts::STR_BODYARMOR,
         // [intArmorDefence, ...]
         Ints : [Some(5u32),None,None,None,None,None,None,None,None,None,None,
                 None,None,None,None,None,None,None,None,None],

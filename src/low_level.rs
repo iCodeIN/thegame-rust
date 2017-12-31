@@ -17,6 +17,8 @@ use cursive::views::{TextView, Dialog, LinearLayout};
 use decorators::decorators;
 use loggers::{logger, log};
 
+const CHARACTERS: [char; 31] = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', ' ', 'ф', 'ы', 'в', 'а'];
+
 pub enum Color {
     Green,
     Black,
@@ -64,6 +66,47 @@ pub const ItemRecords: [TTileRecord; 3] = [
 
 pub fn InitApp(app: &mut Cursive) {
     create_init_screen(app);
+}
+
+fn disable_current_shortcuts(app: &mut Cursive) {
+    for character in CHARACTERS.iter() {
+        app.add_global_callback(*character, |a| {});
+    }
+    use map::Direction::*;
+    app.add_global_callback( Key::Esc,   |a| {});
+    app.add_global_callback( Key::Up,    |a| {});
+    app.add_global_callback( Key::Down,  |a| {});
+    app.add_global_callback( Key::Left,  |a| {});
+    app.add_global_callback( Key::Right, |a| {});
+}
+
+fn enable_main_shortcuts(app: &mut Cursive) {
+    disable_current_shortcuts(app);
+    use map::Direction::*;
+    app.add_global_callback( Key::Esc,   |a| {});
+    app.add_global_callback( Key::Up,    |a| move_cursor(a, Up));
+    app.add_global_callback( Key::Down,  |a| move_cursor(a, Down));
+    app.add_global_callback( Key::Left,  |a| move_cursor(a, Left));
+    app.add_global_callback( Key::Right, |a| move_cursor(a, Right));
+    app.add_global_callback( 'e',        |a| ShowHeroSlots(a));
+    app.add_global_callback( 'i',        |a| ShowHeroItems(a));
+    app.add_global_callback( 'w',        |a| move_cursor(a, Up));
+    app.add_global_callback( 's',        |a| move_cursor(a, Down));
+    app.add_global_callback( 'a',        |a| move_cursor(a, Left));
+    app.add_global_callback( 'd',        |a| move_cursor(a, Right));
+    // Special for Russian keyboard layout.
+    app.add_global_callback( 'ц',        |a| move_cursor(a, Up));
+    app.add_global_callback( 'ы',        |a| move_cursor(a, Down));
+    app.add_global_callback( 'ф',        |a| move_cursor(a, Left));
+    app.add_global_callback( 'в',        |a| move_cursor(a, Right));
+}
+
+fn enable_init_shortcuts(app: &mut Cursive) {
+    disable_current_shortcuts(app);
+    app.add_global_callback(' ', |mut a| { game::GenerateAll();
+                                           game::StartGame(&mut a); });
+
+    app.add_global_callback( Key::Esc,   |a| { a.quit(); });
 }
 
 pub fn create_main_screen(app: &mut Cursive) {
@@ -142,24 +185,7 @@ pub fn create_main_screen(app: &mut Cursive) {
             .unwrap()
             .append_content("|\n");
     }
-    use map::Direction::*;
-    app.add_global_callback( Key::Esc,   |a| {});
-    app.add_global_callback( Key::Up,    |a| move_cursor(a, Up));
-    app.add_global_callback( Key::Down,  |a| move_cursor(a, Down));
-    app.add_global_callback( Key::Left,  |a| move_cursor(a, Left));
-    app.add_global_callback( Key::Right, |a| move_cursor(a, Right));
-    app.add_global_callback( 'i',        |a| ShowHeroItems(a));
-    app.add_global_callback( 'w',        |a| move_cursor(a, Up));
-    app.add_global_callback( 's',        |a| move_cursor(a, Down));
-    app.add_global_callback( 'a',        |a| move_cursor(a, Left));
-    app.add_global_callback( 'd',        |a| move_cursor(a, Right));
-    // Special for Russian keyboard layout.
-    app.add_global_callback( 'ц',        |a| move_cursor(a, Up));
-    app.add_global_callback( 'ы',        |a| move_cursor(a, Down));
-    app.add_global_callback( 'ф',        |a| move_cursor(a, Left));
-    app.add_global_callback( 'в',        |a| move_cursor(a, Right));
-    
-    app.add_global_callback( ' ',        |a| {});
+    enable_main_shortcuts(app);
 }
 
 fn create_init_screen(app: &mut Cursive) {
@@ -189,10 +215,62 @@ fn create_init_screen(app: &mut Cursive) {
     for i in 0..width*height {
         bottom.append_content(["^", ":", "."][map::random(0, 3) as usize]);
     }
-    app.add_global_callback(' ', |mut a| { game::GenerateAll();
-                                           game::StartGame(&mut a); });
+    enable_init_shortcuts(app);
+}
 
-    app.add_global_callback( Key::Esc,   |a| { a.quit(); });
+fn create_slots_screen(app: &mut Cursive) {
+    disable_current_shortcuts(app);
+    let hero = get_ref_curhero!();
+    let mut text = String::from("");
+    text.push_str(texts::STR_HERO_SLOTITEMS);
+    text.push_str("\n\n");
+    for i in 0..hero::MaxSlots {
+        let index = CHARACTERS[i];
+        text.push_str(texts::SlotName[i]);
+        match hero.Slots[i] {
+            None => {
+                text.push_str(&*(format!("[{}] {}", index.to_string(), texts::STR_EMPTY_ITEM)));
+                text.push_str("\n");
+            },
+            Some(item) => {
+                text.push_str(&*(format!("[{}] {}", index.to_string(), item.Name)));
+                text.push_str("\n");
+            }
+        };
+        app.add_global_callback(index, |a| {});
+    }
+    text.push_str("\n\n");
+    text.push_str(texts::STR_HERO_SLOTINFO);
+    app.add_layer(LinearLayout::vertical()
+        .child(Dialog::around(TextView::new(text))
+            .button("Back", |a| { a.pop_layer();
+                                  enable_main_shortcuts(a); }))
+    )
+}
+
+fn create_items_screen(app: &mut Cursive) {
+    disable_current_shortcuts(app);
+    let hero = get_ref_curhero!();
+    let mut text = String::from("");
+    text.push_str(texts::STR_HERO_ITEMS);
+    text.push_str("\n\n");
+    for i in 0..hero::MaxHeroItems {
+        match hero.Items[i] {
+            None => {
+                text.push_str(texts::STR_EMPTY_ITEM);
+                text.push_str("\n");
+            },
+            Some(item) => {
+                text.push_str(item.Name);
+                text.push_str("\n");
+            }
+        };
+    }
+    app.add_layer(LinearLayout::vertical()
+        .child(Dialog::around(TextView::new(text))
+            .button("Back", |a| { a.pop_layer();
+                                  enable_main_shortcuts(a); }))
+    )
 }
 
 pub fn VideoInitialize() {}
@@ -266,25 +344,14 @@ pub fn ShowHeroInfo(app: &mut Cursive, HeroNum: usize) {
 }
 
 fn ShowHeroItems(app: &mut Cursive) {
-    let hero = get_ref_curhero!();
-    let mut text = String::from("");
-    text.push_str(texts::STR_HERO_ITEMS);
-    text.push_str("\n\n");
-    for i in 1..hero::MaxHeroItems + 1 {
-        match hero.Items[i] {
-            None => {
-                //text.push_str(&*(i.to_string() + ") " + &texts::STR_EMPTY_ITEM));
-                text.push_str("\n");
-            },
-            Some(item) => {
-                text.push_str(item.Name);
-                text.push_str("\n");
-            }
-        };
-    }
-    app.add_layer(Dialog::info(text));
+    create_items_screen(app);
     game::ShowGame(app);
 }
+
+fn ShowHeroSlots(app: &mut Cursive) {
+    create_slots_screen(app);
+    game::ShowGame(app);
+} 
 
 pub fn ShowMonster(app: &mut Cursive, m: &monster::TMonster) {
     let mut text: String = app.find_id::<TextView>("area")
@@ -451,7 +518,7 @@ fn move_cursor(mut app: &mut Cursive, direction: map::Direction) {
                 -1 => ShowCompassInfo(app, Up),
                  0 | _ => ()
             }
-
+ShowInfo(app, (hero.y - cur_map.LocalMapTop + map::SCROLL_DELTA).to_string());
             if hero.x - cur_map.LocalMapLeft < map::SCROLL_DELTA {
                 map::ScrollMap(Left);
             } else if hero.x - cur_map.LocalMapLeft + map::SCROLL_DELTA >= map::LOCAL_MAP_WIDTH {

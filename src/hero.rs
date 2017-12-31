@@ -18,10 +18,15 @@ pub const skillTrapSearch: usize = 1;
 
 pub const MaxHeroItems: usize = 12;
 
+pub const MaxSlots: usize = 2; 
+pub const slotBody: usize = 0; 
+pub const slotHands: usize = 1;
+
 pub struct THero<'tgi> {
     pub Chars: [u32; MaxChars],
     pub Skills: [u32; MaxSkills],
     pub Items: [Option<game_item::TGameItem<'tgi>>; MaxHeroItems],
+    pub Slots: [Option<game_item::TGameItem<'tgi>>; MaxSlots],
     pub x: usize,
     pub y: usize,
     pub HP: u32,
@@ -40,6 +45,7 @@ pub static mut HEROES: Heroes = [
         Chars: [0, 0, 0, 0],
         Skills: [0, 0],
         Items: [None; MaxHeroItems],
+        Slots: [None; MaxSlots],
         x: 0,
         y: 0,
         HP: 0,
@@ -63,6 +69,11 @@ fn InitHero(HeroNum: usize) {
     for i in 0..MaxHeroItems {
         hero.Items[i] = None; 
     }
+    for i in 0..MaxSlots {
+        hero.Slots[i] = None; 
+    }
+    hero.Items[0] = Some(game_item::ItemTypes[0]);
+    hero.Items[1] = Some(game_item::ItemTypes[3]);
 
     hero.Level = 0;
     hero.MaxHP = tables::HPLevel_Table[hero.Level];

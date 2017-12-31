@@ -100,7 +100,6 @@ pub static mut CUR_MAP: usize = 0;
 
 //-------------------------------Functions------------------------------------//
 
-#[decorators(logger("MapGeneration"))]
 pub fn MapGeneration(MapLevel: usize) {
     unsafe { CUR_MAP = MapLevel; }
     let cur_map = get_mut_ref_curmap!();
@@ -136,7 +135,7 @@ pub fn MapGeneration(MapLevel: usize) {
                                 game_item::ITEMS[n] = game_item::ItemTypes[random(0, game_item::MaxItemTypes) as usize];
                                 game_item::ITEMS[n].x = x;
                                 game_item::ITEMS[n].y = y;
-                                game_item::ITEMS[n].IsVisible = true;
+                                game_item::ITEMS[n].IsVisible = false;
                             }
                         }
                         n += 1;
@@ -148,7 +147,7 @@ pub fn MapGeneration(MapLevel: usize) {
             cell.IsVisible = false;
         }
     }
-log("Intermediate point").unwrap();
+
     cur_map.LocalMapLeft = MAP_WIDTH/3;
     cur_map.LocalMapTop = MAP_HEIGHT/3;
 
@@ -195,6 +194,7 @@ pub fn ScrollMap(direction: Direction) {
                                       cur_map.LocalMapTop + LOCAL_MAP_HEIGHT/2);
         }
     }
+
     let dx = cur_map.LocalMapLeft - new_local_map_left;
     let dy = cur_map.LocalMapTop - new_local_map_top;
     cur_map.LocalMapLeft = new_local_map_left;

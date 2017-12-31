@@ -1,5 +1,7 @@
 //! This module describes all text information showing in the game.
 
+use hero;
+
 pub const STR_HERO_EXP: &str = "Experience: ";
 pub const STR_HERO_HP: &str = "Health/Max Health: ";
 pub const STR_HERO_XY: &str = "Coordinates: ";
@@ -23,7 +25,7 @@ pub const HELP_EXIT_DIALOG: &str = "Select `Help`to get help.\n\
                               Select `Quit` to exit.";
 
 pub fn help() -> String {
-    format!("`@`: Hero (use <W-A-S-D> keys for moving)\n\
+    format!("`@`: Hero\n\
              \n\
              Tiles:\n\
              `.`: Grass\n\
@@ -40,7 +42,12 @@ pub fn help() -> String {
              `#`: {}\n\
              `&`: {}\n\
              `j`: {}\n\
-             `A`: {}",
+             `A`: {}\n\
+             \n\
+             Shortcuts:\n\
+             `w`, `a`, `s`, `d`: keys for moving of Hero\n\
+             `e`: Hero's slots\n\
+             `i`: Hero's items",
              STR_MONSTER1,
              STR_MONSTER2,
              STR_MONSTER3,
@@ -63,3 +70,7 @@ pub const STR_TRAPSKILL_OK: &str = "Your skill of neutralizing traps is increase
 
 pub const STR_HERO_ITEMS: &str = "Hero's items:";
 pub const STR_EMPTY_ITEM: &str = "<empty>";
+
+pub const STR_HERO_SLOTITEMS: &str = "Used items:";
+pub const SlotName: [&str; hero::MaxSlots] = ["Body:    ", "In hand: "];
+pub const STR_HERO_SLOTINFO: &str = "Press the `[<key>]` to move the slot to `Items`";
