@@ -21,7 +21,7 @@ pub const STR_HERO_DIED: &str = "Hero dies!";
 
 pub const INIT_DIALOG: &str = "Select `Start` or press <Space> key to start playing.\
                                \nSelect `Quit` or press <Esc> key to exit.";
-pub const HELP_EXIT_DIALOG: &str = "Select `Help`to get help.\n\
+pub const HELP_EXIT_DIALOG: &str = "Select `Help` to get help.\n\
                               Select `Quit` to exit.";
 
 pub fn help() -> String {
@@ -74,3 +74,38 @@ pub const STR_EMPTY_ITEM: &str = "<empty>";
 pub const STR_HERO_SLOTITEMS: &str = "Used items:";
 pub const SlotName: [&str; hero::MaxSlots] = ["Body:    ", "In hand: "];
 pub const STR_HERO_SLOTINFO: &str = "Press the `[<key>]` to move the slot to `Items`";
+
+pub const STR_GAME_OVER: &str = "
+
+
+
+
+
+
+
+
+
+             #######          #####        ###     ###     ##########
+           ###    ###        ### ###       ####   ####     ###    ###
+         ###                ###   ###      ##### #####     ###
+         ###     #####     ###     ###     ### ### ###     ######
+         ###       ###     ###########     ###  #  ###     ###
+           ###    ###      ###     ###     ###     ###     ###    ###
+             #######       ###     ###     ###     ###     ##########
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+            #######        ###     ###     ##########     ########## 
+         ###       ###     ###     ###     ###    ###     ###     ###
+         ###       ###     ###     ###     ###            ###     ###
+         ###       ###     ###     ###     ######         ##########
+         ###       ###      ###   ###      ###            ###   ###
+         ###       ###       ### ###       ###    ###     ###    ###
+            #######           #####        ##########     ###     ###";

@@ -17,7 +17,7 @@ use cursive::views::{TextView, Dialog, LinearLayout};
 use decorators::decorators;
 use loggers::{logger, log};
 
-const CHARACTERS: [char; 31] = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', ' ', 'ф', 'ы', 'в', 'а'];
+const CHARACTERS: [char; 33] = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', ' ', 'ф', 'ы', 'в', 'а', 'у', 'ш'];
 
 pub enum Color {
     Green,
@@ -95,6 +95,8 @@ fn enable_main_shortcuts(app: &mut Cursive) {
     app.add_global_callback( 'a',        |a| move_cursor(a, Left));
     app.add_global_callback( 'd',        |a| move_cursor(a, Right));
     // Special for Russian keyboard layout.
+    app.add_global_callback( 'у',        |a| ShowHeroSlots(a));
+    app.add_global_callback( 'ш',        |a| ShowHeroItems(a));
     app.add_global_callback( 'ц',        |a| move_cursor(a, Up));
     app.add_global_callback( 'ы',        |a| move_cursor(a, Down));
     app.add_global_callback( 'ф',        |a| move_cursor(a, Left));
@@ -225,7 +227,7 @@ fn create_slots_screen(app: &mut Cursive) {
     text.push_str(texts::STR_HERO_SLOTITEMS);
     text.push_str("\n\n");
     for i in 0..hero::MaxSlots {
-        let index = CHARACTERS[i];
+        let index: char = i.to_string().chars().next().unwrap();
         text.push_str(texts::SlotName[i]);
         match hero.Slots[i] {
             None => {
@@ -518,7 +520,7 @@ fn move_cursor(mut app: &mut Cursive, direction: map::Direction) {
                 -1 => ShowCompassInfo(app, Up),
                  0 | _ => ()
             }
-ShowInfo(app, (hero.y - cur_map.LocalMapTop + map::SCROLL_DELTA).to_string());
+
             if hero.x - cur_map.LocalMapLeft < map::SCROLL_DELTA {
                 map::ScrollMap(Left);
             } else if hero.x - cur_map.LocalMapLeft + map::SCROLL_DELTA >= map::LOCAL_MAP_WIDTH {
@@ -542,14 +544,7 @@ pub fn HeroDied(app: &mut Cursive) {
 }
 
 fn GameOverAnimation(app: &mut Cursive) {
-    use std::{thread, time};
-    let interval = time::Duration::from_millis(10);
-    let cur_map = get_mut_ref_curmap!();
-    for y in cur_map.LocalMapTop..cur_map.LocalMapTop + map::LOCAL_MAP_HEIGHT {
-        thread::sleep(interval);
-        for x in cur_map.LocalMapLeft..cur_map.LocalMapLeft + map::LOCAL_MAP_WIDTH {
-            get_mut_ref_cell!(x, y).IsVisible = false;
-            ShowCell(app, get_ref_cell!(x, y), x, y);
-        }
-    }
+    app.find_id::<TextView>("area")
+        .unwrap()
+        .set_content(texts::STR_GAME_OVER);
 }
