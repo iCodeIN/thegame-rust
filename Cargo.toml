@@ -5,5 +5,5 @@ authors = ["root"]
 
 [dependencies]
 rand = "0.3.*"
-cursive = "0.6.*"
+cursive = "0.7.*"
 decorators = { path = "../decorators" }

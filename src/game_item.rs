@@ -5,7 +5,7 @@ use texts;
 const MaxItemInt: usize = 20;
 const MaxRealInt: usize = 20; 
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum TGameItemType {
     ItemHandWeapon,
     ItemArmor
@@ -23,7 +23,7 @@ pub struct TGameItem<'tgi> {
     ID: u32,
     pub x: usize,
     pub y: usize,
-    pub IType: Option<TGameItemType>,
+    pub IType: TGameItemType,
     pub Name : &'tgi str,
     Ints : [Option<u32>; MaxItemInt],
     Reals: [Option<f32>; MaxRealInt],
@@ -50,7 +50,7 @@ pub const ItemTypes: Items = [
         ID: 0,
         x: 0,
         y: 0,
-        IType: Some(TGameItemType::ItemHandWeapon),
+        IType: TGameItemType::ItemHandWeapon,
         Name : texts::STR_AXE,
         // [intAttack_d1, intAttack_d2, intAttackHit(in percents), ...]
         Ints : [Some(1u32),Some(6),Some(50),None,None,None,None,None,None,None,
@@ -62,7 +62,7 @@ pub const ItemTypes: Items = [
         ID: 1,
         x: 0,
         y: 0,
-        IType: Some(TGameItemType::ItemHandWeapon),
+        IType: TGameItemType::ItemHandWeapon,
         Name : texts::STR_SWORD,
         Ints : [Some(2u32),Some(4),Some(80),None,None,None,None,None,None,None,
                 None,None,None,None,None,None,None,None,None,None],
@@ -73,7 +73,7 @@ pub const ItemTypes: Items = [
         ID: 2,
         x: 0,
         y: 0,
-        IType: Some(TGameItemType::ItemArmor),
+        IType: TGameItemType::ItemArmor,
         Name : texts::STR_HELM,
         Ints : [Some(1u32),None,None,None,None,None,None,None,None,None,None,
                 None,None,None,None,None,None,None,None,None],
@@ -84,7 +84,7 @@ pub const ItemTypes: Items = [
         ID: 3,
         x: 0,
         y: 0,
-        IType: Some(TGameItemType::ItemArmor),
+        IType: TGameItemType::ItemArmor,
         Name : texts::STR_BODYARMOR,
         // [intArmorDefence, ...]
         Ints : [Some(5u32),None,None,None,None,None,None,None,None,None,None,
@@ -100,7 +100,7 @@ pub static mut ITEMS: [TGameItem; MaxItems] = [
         ID: 0,
         x: 0,
         y: 0,
-        IType: Some(TGameItemType::ItemHandWeapon),
+        IType: TGameItemType::ItemHandWeapon,
         Name : texts::STR_AXE,
         // [intAttack_d1, intAttack_d2, intAttackHit(in percents), ...]
         Ints : [None; MaxItemInt],

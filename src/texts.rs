@@ -70,6 +70,7 @@ pub const STR_TRAPSKILL_OK: &str = "Your skill of neutralizing traps is increase
 
 pub const STR_HERO_ITEMS: &str = "Hero's items:";
 pub const STR_EMPTY_ITEM: &str = "<empty>";
+pub const STR_HERO_ITEMINFO: &str = "Press the `[<key>]` to move the item to `Slots`";
 
 pub const STR_HERO_SLOTITEMS: &str = "Used items:";
 pub const SlotName: [&str; hero::MaxSlots] = ["Body:    ", "In hand: "];

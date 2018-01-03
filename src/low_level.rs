@@ -17,8 +17,14 @@ use cursive::views::{TextView, Dialog, LinearLayout};
 use decorators::decorators;
 use loggers::{logger, log};
 
-const CHARACTERS: [char; 33] = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', ' ', 'ф', 'ы', 'в', 'а', 'у', 'ш'];
-
+const CHARACTERS: [char; 43] = [
+    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+    'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j',
+    'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't',
+    'u', 'v', 'w', 'x', 'y', 'z', ' ', 'ф', 'ы', 'в',
+    'а', 'у', 'ш'
+];
+#[derive(Debug)]
 pub enum Color {
     Green,
     Black,
@@ -227,19 +233,24 @@ fn create_slots_screen(app: &mut Cursive) {
     text.push_str(texts::STR_HERO_SLOTITEMS);
     text.push_str("\n\n");
     for i in 0..hero::MaxSlots {
-        let index: char = i.to_string().chars().next().unwrap();
+        let mut character: char;
+        if i < 10 {
+            character = i.to_string().chars().next().unwrap();
+        } else if i > 9 && i < 38 {
+            character = CHARACTERS[i];
+        } else { panic!("Too many slots: {:?}!", i); }
         text.push_str(texts::SlotName[i]);
         match hero.Slots[i] {
             None => {
-                text.push_str(&*(format!("[{}] {}", index.to_string(), texts::STR_EMPTY_ITEM)));
+                text.push_str(&*(format!("[{}] {}", character, texts::STR_EMPTY_ITEM)));
                 text.push_str("\n");
             },
             Some(item) => {
-                text.push_str(&*(format!("[{}] {}", index.to_string(), item.Name)));
+                text.push_str(&*(format!("[{}] {}", character, item.Name)));
                 text.push_str("\n");
             }
         };
-        app.add_global_callback(index, |a| {});
+        app.add_global_callback(character, move |a| { move_slot_to_items(a, i); });
     }
     text.push_str("\n\n");
     text.push_str(texts::STR_HERO_SLOTINFO);
@@ -257,22 +268,57 @@ fn create_items_screen(app: &mut Cursive) {
     text.push_str(texts::STR_HERO_ITEMS);
     text.push_str("\n\n");
     for i in 0..hero::MaxHeroItems {
+        let mut character: char;
+        if i < 10 {
+            character = i.to_string().chars().next().unwrap();
+        } else if i > 9 && i < 38 {
+            character = CHARACTERS[i];
+        } else { panic!("Too many items: {:?}!", i); }
         match hero.Items[i] {
             None => {
-                text.push_str(texts::STR_EMPTY_ITEM);
+                text.push_str(&*(format!("[{}] {}", character, texts::STR_EMPTY_ITEM)));
                 text.push_str("\n");
             },
             Some(item) => {
-                text.push_str(item.Name);
+                text.push_str(&*(format!("[{}] {}", character, item.Name)));
                 text.push_str("\n");
             }
         };
+        app.add_global_callback(character, move |a| { move_item_to_slots(a, i); });
     }
+    text.push_str("\n\n");
+    text.push_str(texts::STR_HERO_ITEMINFO);
     app.add_layer(LinearLayout::vertical()
         .child(Dialog::around(TextView::new(text))
             .button("Back", |a| { a.pop_layer();
                                   enable_main_shortcuts(a); }))
     )
+}
+
+fn move_slot_to_items(app: &mut Cursive, index: usize) {
+    let hero = get_mut_ref_curhero!();
+    let free_bag_index: Option<usize> = hero::GetFreeBag(hero);
+    let slot: Option<game_item::TGameItem> = hero.Slots[index as usize];
+    if slot.is_some() && free_bag_index.is_some() {
+        hero.Items[free_bag_index.unwrap()] = slot;
+        hero.Slots[index as usize] = None;
+    }
+    app.pop_layer();
+    create_slots_screen(app);
+}
+
+fn move_item_to_slots(app: &mut Cursive, index: usize) {
+    let hero = get_mut_ref_curhero!();
+    let item: Option<game_item::TGameItem> = hero.Items[index as usize];
+    if item.is_some() {
+        let free_slot_index: Option<usize> = hero::GetFreeSlot(hero, item.unwrap());
+        if free_slot_index.is_some() {
+            hero.Slots[free_slot_index.unwrap()] = item;
+            hero.Items[index as usize] = None;
+        }
+    }
+    app.pop_layer();
+    create_items_screen(app);
 }
 
 pub fn VideoInitialize() {}
@@ -306,9 +352,8 @@ pub fn ShowItem(app: &mut Cursive, itm: &game_item::TGameItem) {
     text.remove(index);
     text.insert(index,
                 ItemRecords[match itm.IType {
-                        Some(ItemHandWeapon) => 0,
-                        Some(ItemArmor) => 1,
-                        None => 2
+                        ItemHandWeapon => 0,
+                        ItemArmor => 1
                     } as usize].C);
     app.find_id::<TextView>("area").unwrap().set_content(text);
 }

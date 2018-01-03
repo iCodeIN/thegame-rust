@@ -165,3 +165,28 @@ pub fn IncXP(app: &mut cursive::Cursive, H: &mut THero, axp: u32) {
     low_level::ShowInfo(app, texts::STR_ADD_EXP.to_owned()
                         + &axp.to_string() + " points");
 }
+
+pub fn GetFreeBag(H: &THero) -> Option<usize> {
+    for i in 0..MaxHeroItems {
+        if H.Items[i].is_none() { return Some(i); }
+    }
+    None
+}
+
+
+
+pub fn GoodSlot(Slot: usize, Itm: game_item::TGameItem) -> bool {
+    use game_item::TGameItemType::*;
+    match Slot {
+       slotBody => vec!(ItemArmor).contains(&Itm.IType),
+       slotHands => vec!(ItemHandWeapon).contains(&Itm.IType),
+       _ => panic!("{:?}", "Error in `GoodSlot`")
+    }
+}
+
+pub fn GetFreeSlot(H: &THero, Itm: game_item::TGameItem) -> Option<usize> {
+    for i in 0..MaxSlots {
+        if H.Slots[i].is_none() && GoodSlot(i, Itm) { return Some(i); }
+    }
+    None
+}
