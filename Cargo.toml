@@ -1,9 +1,9 @@
 [package]
 name = "thegame"
-version = "0.4.6"
+version = "0.4.7"
 authors = ["root"]
 
 [dependencies]
-rand = "0.3.*"
-cursive = "0.7.*"
-decorators = { path = "../decorators" }
+rand = "0.4.*"
+cursive = { path = "../git/Cursive" }
+decorators = { git = "https://github.com/Virtuos86/rust-decorators.git" }

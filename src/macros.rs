@@ -134,3 +134,24 @@ macro_rules! get_mut_ref_curhero_wo_unsafe {
     })
 }
 
+#[macro_export]
+macro_rules! log {
+    ($message:expr) => ({
+        use ::DEBUG;
+        if DEBUG {
+            use loggers::log;
+            log($message);
+        } else {}
+    })
+}
+
+#[macro_export]
+macro_rules! strict_log {
+    ($message:expr) => ({
+        use ::DEBUG;
+        if DEBUG {
+            use loggers::strict_log;
+            strict_log($message);
+        } else {}
+    })
+}

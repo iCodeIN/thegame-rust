@@ -12,20 +12,25 @@ pub use cursive::Cursive;
 use cursive::event::Key;
 //use cursive::menu::MenuTree;
 use cursive::traits::*;
-use cursive::views::{TextView, Dialog, LinearLayout};
+use cursive::views::{Dialog, LinearLayout, SelectView, TextView};
+use cursive::align::HAlign;
+
+use cursive::theme::BaseColor;
+use cursive::theme::Color;
+use cursive::theme::Effect;
+use cursive::theme::Style;
+use cursive::utils::markup::StyledString;
 
 use decorators::decorators;
-use loggers::{logger, log};
+use loggers::{log, logger};
 
 const CHARACTERS: [char; 43] = [
-    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-    'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j',
-    'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't',
-    'u', 'v', 'w', 'x', 'y', 'z', ' ', 'ф', 'ы', 'в',
-    'а', 'у', 'ш'
+    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i',
+    'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', ' ', 'ф',
+    'ы', 'в', 'а', 'у', 'ш',
 ];
 #[derive(Debug)]
-pub enum Color {
+pub enum Colour {
     Green,
     Black,
     Brown,
@@ -35,39 +40,93 @@ pub enum Color {
     Yellow,
     LightMagenta,
     LightCyan,
-    LightBlue
+    LightBlue,
 }
 
 pub struct TTileRecord {
     pub C: char,
-    pub Clr: Color
+    pub Clr: Colour,
 }
 
 pub const TileRecords: [TTileRecord; (map::tileLast + 1) as usize] = [
-    TTileRecord {C: '.', Clr: Color::Green},     // Grass
-    TTileRecord {C: ':', Clr: Color::Black},     // Ground
-    TTileRecord {C: '+', Clr: Color::Brown},     // StairsUp
-    TTileRecord {C: '-', Clr: Color::Brown},     // StairsDown
-    TTileRecord {C: ':', Clr: Color::Brown},     // Trap
-    TTileRecord {C: '*', Clr: Color::Brown},     // Live
-    TTileRecord {C: '^', Clr: Color::LightGray}, // Tree
-    TTileRecord {C: 'X', Clr: Color::LightGreen} // Stone
+    TTileRecord {
+        C: '.',
+        Clr: Colour::Green,
+    }, // Grass
+    TTileRecord {
+        C: ':',
+        Clr: Colour::Black,
+    }, // Ground
+    TTileRecord {
+        C: '+',
+        Clr: Colour::Brown,
+    }, // StairsUp
+    TTileRecord {
+        C: '-',
+        Clr: Colour::Brown,
+    }, // StairsDown
+    TTileRecord {
+        C: ':',
+        Clr: Colour::Brown,
+    }, // Trap
+    TTileRecord {
+        C: '*',
+        Clr: Colour::Brown,
+    }, // Live
+    TTileRecord {
+        C: '^',
+        Clr: Colour::LightGray,
+    }, // Tree
+    TTileRecord {
+        C: 'X',
+        Clr: Colour::LightGreen,
+    }, // Stone
 ];
 
 pub const MonsterRecords: [TTileRecord; monster::MaxMonsterTypes as usize] = [
-    TTileRecord {C: 'p', Clr: Color::LightRed},
-    TTileRecord {C: '%', Clr: Color::Yellow},
-    TTileRecord {C: '!', Clr: Color::LightGreen},
-    TTileRecord {C: '#', Clr: Color::LightMagenta},
-    TTileRecord {C: '&', Clr: Color::LightCyan},
-    TTileRecord {C: 'j', Clr: Color::LightGray},
-    TTileRecord {C: 'A', Clr: Color::LightBlue},
+    TTileRecord {
+        C: 'p',
+        Clr: Colour::LightRed,
+    },
+    TTileRecord {
+        C: '%',
+        Clr: Colour::Yellow,
+    },
+    TTileRecord {
+        C: '!',
+        Clr: Colour::LightGreen,
+    },
+    TTileRecord {
+        C: '#',
+        Clr: Colour::LightMagenta,
+    },
+    TTileRecord {
+        C: '&',
+        Clr: Colour::LightCyan,
+    },
+    TTileRecord {
+        C: 'j',
+        Clr: Colour::LightGray,
+    },
+    TTileRecord {
+        C: 'A',
+        Clr: Colour::LightBlue,
+    },
 ];
 
 pub const ItemRecords: [TTileRecord; 3] = [
-    TTileRecord {C: '>', Clr: Color::LightCyan},
-    TTileRecord {C: '[', Clr: Color::LightGreen},
-    TTileRecord {C: 'e', Clr: Color::Black}
+    TTileRecord {
+        C: '>',
+        Clr: Colour::LightCyan,
+    },
+    TTileRecord {
+        C: '[',
+        Clr: Colour::LightGreen,
+    },
+    TTileRecord {
+        C: 'e',
+        Clr: Colour::Black,
+    },
 ];
 
 pub fn InitApp(app: &mut Cursive) {
@@ -76,107 +135,114 @@ pub fn InitApp(app: &mut Cursive) {
 
 fn disable_current_shortcuts(app: &mut Cursive) {
     for character in CHARACTERS.iter() {
-        app.add_global_callback(*character, |a| {});
+        app.clear_global_callbacks(*character);
     }
     use map::Direction::*;
-    app.add_global_callback( Key::Esc,   |a| {});
-    app.add_global_callback( Key::Up,    |a| {});
-    app.add_global_callback( Key::Down,  |a| {});
-    app.add_global_callback( Key::Left,  |a| {});
-    app.add_global_callback( Key::Right, |a| {});
+    app.clear_global_callbacks(Key::Enter);
+    app.clear_global_callbacks(Key::Esc);
+    app.clear_global_callbacks(Key::Up);
+    app.clear_global_callbacks(Key::Down);
+    app.clear_global_callbacks(Key::Left);
+    app.clear_global_callbacks(Key::Right);
+    app.clear_global_callbacks(Key::Backspace);
 }
 
 fn enable_main_shortcuts(app: &mut Cursive) {
     disable_current_shortcuts(app);
     use map::Direction::*;
-    app.add_global_callback( Key::Esc,   |a| {});
-    app.add_global_callback( Key::Up,    |a| move_cursor(a, Up));
-    app.add_global_callback( Key::Down,  |a| move_cursor(a, Down));
-    app.add_global_callback( Key::Left,  |a| move_cursor(a, Left));
-    app.add_global_callback( Key::Right, |a| move_cursor(a, Right));
-    app.add_global_callback( 'e',        |a| ShowHeroSlots(a));
-    app.add_global_callback( 'i',        |a| ShowHeroItems(a));
-    app.add_global_callback( 'w',        |a| move_cursor(a, Up));
-    app.add_global_callback( 's',        |a| move_cursor(a, Down));
-    app.add_global_callback( 'a',        |a| move_cursor(a, Left));
-    app.add_global_callback( 'd',        |a| move_cursor(a, Right));
+    app.add_global_callback(Key::Up, |a| move_cursor(a, Up));
+    app.add_global_callback(Key::Down, |a| move_cursor(a, Down));
+    app.add_global_callback(Key::Left, |a| move_cursor(a, Left));
+    app.add_global_callback(Key::Right, |a| move_cursor(a, Right));
+    app.add_global_callback('e', |a| ShowHeroSlots(a));
+    app.add_global_callback('i', |a| ShowHeroItems(a));
+    app.add_global_callback('w', |a| move_cursor(a, Up));
+    app.add_global_callback('s', |a| move_cursor(a, Down));
+    app.add_global_callback('a', |a| move_cursor(a, Left));
+    app.add_global_callback('d', |a| move_cursor(a, Right));
     // Special for Russian keyboard layout.
-    app.add_global_callback( 'у',        |a| ShowHeroSlots(a));
-    app.add_global_callback( 'ш',        |a| ShowHeroItems(a));
-    app.add_global_callback( 'ц',        |a| move_cursor(a, Up));
-    app.add_global_callback( 'ы',        |a| move_cursor(a, Down));
-    app.add_global_callback( 'ф',        |a| move_cursor(a, Left));
-    app.add_global_callback( 'в',        |a| move_cursor(a, Right));
+    app.add_global_callback('у', |a| ShowHeroSlots(a));
+    app.add_global_callback('ш', |a| ShowHeroItems(a));
+    app.add_global_callback('ц', |a| move_cursor(a, Up));
+    app.add_global_callback('ы', |a| move_cursor(a, Down));
+    app.add_global_callback('ф', |a| move_cursor(a, Left));
+    app.add_global_callback('в', |a| move_cursor(a, Right));
 }
 
 fn enable_init_shortcuts(app: &mut Cursive) {
     disable_current_shortcuts(app);
-    app.add_global_callback(' ', |mut a| { game::GenerateAll();
-                                           game::StartGame(&mut a); });
+    app.add_global_callback(' ', |mut a| {
+        game::GenerateAll();
+        game::StartGame(&mut a);
+    });
 
-    app.add_global_callback( Key::Esc,   |a| { a.quit(); });
+    app.add_global_callback(Key::Esc, |a| {
+        a.quit();
+    });
 }
 
 pub fn create_main_screen(app: &mut Cursive) {
-    let mut text: String = "".to_owned();
+    disable_current_shortcuts(app);
+    let mut text = StyledString::plain("");
     for y in 0..map::LOCAL_MAP_HEIGHT {
         for x in 0..map::LOCAL_MAP_WIDTH {
-            text.push_str(" ");
+            text.append(StyledString::plain(" "));
         }
-        text.push_str("\n");
+        text.append(StyledString::plain("\n"));
     }
     let sep = TextView::empty()
         .with_id("sep")
         .fixed_size((1, map::LOCAL_MAP_HEIGHT));
-    app.add_layer(LinearLayout::horizontal()
-        .child(
-            TextView::new(text)
-                .with_id("area")
-                .fixed_size((map::LOCAL_MAP_WIDTH, map::LOCAL_MAP_HEIGHT)))
-        .child(LinearLayout::horizontal()
-            .child(sep)
-            .child(LinearLayout::vertical()
-                .child(
-                    LinearLayout::horizontal()
-                        .child(
-                            TextView::empty()
-                                .center()
-                                .with_id("minimap")
-                                .fixed_size((12, 5)))
-                        .child(
-                            TextView::empty()
-                                .center()
-                                .with_id("compass")
-                                .fixed_size((9, 5))))
-                .child(
-                    TextView::empty()
-                        .with_id("sep1")
-                        .fixed_size((9, 1)))
-                .child(
-                    TextView::empty()
-                        .center()
-                        .with_id("info")
-                        .fixed_size((9, 5)))
-                .child(
-                    TextView::empty()
-                        .with_id("sep2")
-                        .fixed_size((9, 1)))
-                .child(
-                    TextView::empty()
-                        .with_id("hero_info")
-                        .fixed_size(
-                            (24, map::LOCAL_MAP_HEIGHT - 5 - 1 - 5 - 1 - 9)))
-                .child(Dialog::around(TextView::new(texts::HELP_EXIT_DIALOG))
-                    .button("Help", |a| a.add_layer(
-                        Dialog::info(texts::help())))
-                    .button("Quit", |mut a| {
-                        a.pop_layer();
-                        create_init_screen(&mut a);
-                    })
-                    .with_id("exit")
-                    .fixed_size((24, 9)))
+    app.add_layer(
+        LinearLayout::horizontal()
+            .child(
+                TextView::new(text)
+                    .with_id("area")
+                    .fixed_size((map::LOCAL_MAP_WIDTH, map::LOCAL_MAP_HEIGHT)),
             )
-        )
+            .child(
+                LinearLayout::horizontal().child(sep).child(
+                    LinearLayout::vertical()
+                        .child(
+                            LinearLayout::horizontal()
+                                .child(
+                                    TextView::empty()
+                                        .center()
+                                        .with_id("minimap")
+                                        .fixed_size((12, 5)),
+                                )
+                                .child(
+                                    TextView::empty()
+                                        .center()
+                                        .with_id("compass")
+                                        .fixed_size((9, 5)),
+                                ),
+                        )
+                        .child(TextView::empty().with_id("sep1").fixed_size((9, 1)))
+                        .child(
+                            TextView::empty()
+                                .center()
+                                .with_id("info")
+                                .fixed_size((9, 5)),
+                        )
+                        .child(TextView::empty().with_id("sep2").fixed_size((9, 1)))
+                        .child(
+                            TextView::empty()
+                                .with_id("hero_info")
+                                .fixed_size((24, map::LOCAL_MAP_HEIGHT - 5 - 1 - 5 - 1 - 9)),
+                        )
+                        .child(
+                            Dialog::around(TextView::new(texts::HELP_EXIT_DIALOG))
+                                .button("Help", |a| a.add_layer(Dialog::info(texts::help())))
+                                .button("Quit", |mut a| {
+                                    a.pop_layer();
+                                    create_init_screen(&mut a);
+                                })
+                                .with_id("exit")
+                                .fixed_size((24, 9)),
+                        ),
+                ),
+            ),
     );
     ShowMinimap(app);
     app.find_id::<TextView>("compass")
@@ -189,45 +255,56 @@ pub fn create_main_screen(app: &mut Cursive) {
         .unwrap()
         .set_content("________________________");
     for _ in 0..map::LOCAL_MAP_HEIGHT {
-        app.find_id::<TextView>("sep")
-            .unwrap()
-            .append_content("|\n");
+        app.find_id::<TextView>("sep").unwrap().append("|\n");
     }
     enable_main_shortcuts(app);
 }
 
 fn create_init_screen(app: &mut Cursive) {
+    disable_current_shortcuts(app);
     let (width, height) = (70, 18);
-    app.add_layer(Dialog::around(LinearLayout::vertical()
-        .child(TextView::empty()
-            .with_id("top")
-            .fixed_size((width, height)))
-        .child(TextView::new(texts::INIT_DIALOG)
-            .center()
-            .fixed_size((width, 4)))
-        .child(TextView::empty()
-            .with_id("bottom")
-            .fixed_size((width, height)))
-        .fixed_size((width, height*2 + 4)))
-        .title("THE GAME")
-        .button("Start", |mut a| { game::GenerateAll();
-                                   game::StartGame(&mut a); })
-        .button("Quit", |a| a.quit())
-        .with_id("init"));
+    app.add_layer(
+        Dialog::around(
+            LinearLayout::vertical()
+                .child(TextView::empty().with_id("top").fixed_size((width, height)))
+                .child(
+                    TextView::new(texts::INIT_DIALOG)
+                        .center()
+                        .fixed_size((width, 4)),
+                )
+                .child(
+                    TextView::empty()
+                        .with_id("bottom")
+                        .fixed_size((width, height)),
+                )
+                .fixed_size((width, height * 2 + 4)),
+        ).title("THE GAME")
+            .button("Start", |mut a| {
+                game::GenerateAll();
+                game::StartGame(&mut a);
+            })
+            .button("Quit", |a| a.quit())
+            .with_id("init"),
+    );
 
     let mut top = app.find_id::<TextView>("top").unwrap();
     let mut bottom = app.find_id::<TextView>("bottom").unwrap();
-    for i in 0..width*height {
-        top.append_content(["^", ":", "."][map::random(0, 3) as usize]);
-    }
-    for i in 0..width*height {
-        bottom.append_content(["^", ":", "."][map::random(0, 3) as usize]);
-    }
+
+    top.append(
+        (0..width * height)
+            .map(|i| ["^", ":", "."][map::random(0, 3) as usize])
+            .collect::<String>(),
+    );
+    bottom.append(
+        (0..width * height)
+            .map(|i| ["^", ":", "."][map::random(0, 3) as usize])
+            .collect::<String>(),
+    );
     enable_init_shortcuts(app);
 }
 
 fn create_slots_screen(app: &mut Cursive) {
-    disable_current_shortcuts(app);
+    //disable_current_shortcuts(app);
     let hero = get_ref_curhero!();
     let mut text = String::from("");
     text.push_str(texts::STR_HERO_SLOTITEMS);
@@ -238,61 +315,72 @@ fn create_slots_screen(app: &mut Cursive) {
             character = i.to_string().chars().next().unwrap();
         } else if i > 9 && i < 38 {
             character = CHARACTERS[i];
-        } else { panic!("Too many slots: {:?}!", i); }
+        } else {
+            panic!("Too many slots: {:?}!", i);
+        }
         text.push_str(texts::SlotName[i]);
         match hero.Slots[i] {
             None => {
                 text.push_str(&*(format!("[{}] {}", character, texts::STR_EMPTY_ITEM)));
                 text.push_str("\n");
-            },
+            }
             Some(item) => {
                 text.push_str(&*(format!("[{}] {}", character, item.Name)));
                 text.push_str("\n");
             }
         };
-        app.add_global_callback(character, move |a| { move_slot_to_items(a, i); });
+        disable_current_shortcuts(app);
+        app.add_global_callback(character, move |a| {
+            move_slot_to_items(a, i);
+        });
     }
     text.push_str("\n\n");
     text.push_str(texts::STR_HERO_SLOTINFO);
-    app.add_layer(LinearLayout::vertical()
-        .child(Dialog::around(TextView::new(text))
-            .button("Back", |a| { a.pop_layer();
-                                  enable_main_shortcuts(a); }))
+    app.add_layer(
+        LinearLayout::vertical().child(Dialog::around(TextView::new(text)).button("Back", |a| {
+            a.pop_layer();
+            enable_main_shortcuts(a);
+        })),
     )
 }
 
 fn create_items_screen(app: &mut Cursive) {
     disable_current_shortcuts(app);
     let hero = get_ref_curhero!();
-    let mut text = String::from("");
-    text.push_str(texts::STR_HERO_ITEMS);
-    text.push_str("\n\n");
+    let mut items = SelectView::new().h_align(HAlign::Left);
+    let mut item: &str;
     for i in 0..hero::MaxHeroItems {
-        let mut character: char;
-        if i < 10 {
-            character = i.to_string().chars().next().unwrap();
-        } else if i > 9 && i < 38 {
-            character = CHARACTERS[i];
-        } else { panic!("Too many items: {:?}!", i); }
         match hero.Items[i] {
             None => {
-                text.push_str(&*(format!("[{}] {}", character, texts::STR_EMPTY_ITEM)));
-                text.push_str("\n");
-            },
-            Some(item) => {
-                text.push_str(&*(format!("[{}] {}", character, item.Name)));
-                text.push_str("\n");
+                item = texts::STR_EMPTY_ITEM;
+            }
+            Some(it) => {
+                item = it.Name;
             }
         };
-        app.add_global_callback(character, move |a| { move_item_to_slots(a, i); });
+        items.add_item(item, i);
     }
-    text.push_str("\n\n");
-    text.push_str(texts::STR_HERO_ITEMINFO);
-    app.add_layer(LinearLayout::vertical()
-        .child(Dialog::around(TextView::new(text))
-            .button("Back", |a| { a.pop_layer();
-                                  enable_main_shortcuts(a); }))
-    )
+
+    items.set_selection(hero.CurItem);
+    items.set_on_submit(|a, &i| {
+        move_item_to_slots(a, i);
+    });
+
+    items.set_on_select(|a, &i| {
+        let hero = get_mut_ref_curhero!();
+        hero.CurItem = i;
+    });
+
+    app.add_global_callback(Key::Backspace, move_item_out);
+
+    app.add_layer(
+        Dialog::around(items)
+            .title(texts::STR_HERO_ITEMS)
+            .button("Back", |a| {
+                a.pop_layer();
+                enable_main_shortcuts(a);
+            }),
+    );
 }
 
 fn move_slot_to_items(app: &mut Cursive, index: usize) {
@@ -321,23 +409,107 @@ fn move_item_to_slots(app: &mut Cursive, index: usize) {
     create_items_screen(app);
 }
 
+fn move_item_out(app: &mut Cursive) {
+    let hero = get_mut_ref_curhero!();
+    log!(format!(
+        "hero.CurItem = {}\nhero.Items[hero.CurItem] = {:?}",
+        hero.CurItem, hero.Items[hero.CurItem]
+    ));
+    let item: Option<game_item::TGameItem> = hero.Items[hero.CurItem];
+    if item.is_some() {
+        for i in 0..game_item::MaxItems {
+            unsafe {
+                match game_item::ITEMS[i] {
+                    Some(it) => if it.x == hero.x && it.y == hero.y {
+                        return;
+                    },
+                    None => {}
+                }
+            }
+        }
+        let index = game_item::GetFreeItemNum();
+        if index.is_some() {
+            item.unwrap().x = hero.x;
+            item.unwrap().y = hero.y;
+            item.unwrap().IsVisible = true;
+            ShowInfo(app, format!("{:?}", item));
+            unsafe {
+                game_item::ITEMS[index.unwrap()] = item;
+            }
+            hero.Items[hero.CurItem] = None;
+            //ShowInfo(app, format!("{}-{}\n{}-{}", game_item::ITEMS[index.unwrap()].unwrap().x, game_item::ITEMS[index.unwrap()].unwrap().y, hero.x, hero.y));
+        }
+    }
+    app.pop_layer();
+    create_items_screen(app);
+}
+
 pub fn VideoInitialize() {}
 
-pub fn PrepareMap() {}
-
+pub fn PrepareMap(app: &mut Cursive) {
+    let mut text = String::with_capacity(map::MAP_WIDTH * map::MAP_HEIGHT);
+    for x in 0..map::MAP_WIDTH {
+        for y in 0..map::MAP_HEIGHT {
+            text.push_str(" ");
+        }
+    }
+    app.find_id::<TextView>("area")
+        .unwrap()
+        .set_content(StyledString::from(text));
+}
+/*
 pub fn ShowCell(app: &mut Cursive, t: &map::TMapCell, x: usize, y: usize) {
     let c = TileRecords[t.Tile as usize].C;
     let mut text: String = app.find_id::<TextView>("area")
         .unwrap()
         .get_content()
+        .source()
         .to_owned();
     let cur_map = get_ref_curmap!();
-    let index = (map::LOCAL_MAP_WIDTH+1)*(y-cur_map.LocalMapTop)
-                +(x-cur_map.LocalMapLeft);
+    let index = (map::LOCAL_MAP_WIDTH + 1) * (y - cur_map.LocalMapTop) + (x - cur_map.LocalMapLeft);
     text.remove(index);
-    text.insert(index,
-        if t.IsVisible {c} else {' '});
-    app.find_id::<TextView>("area").unwrap().set_content(text);
+    let mut styled_text = StyledString::from(text);
+    log!(index.to_string() + &*(c.to_string()));
+    styled_text.insert_char(
+        index,
+        if t.IsVisible {
+            c.to_string()
+        } else {
+            " ".to_owned()
+        },
+    );
+    log!("No problem");
+    app.find_id::<TextView>("area")
+        .unwrap()
+        .set_content(styled_text);
+    log!("Oo");
+}
+*/
+pub fn ShowCell(app: &mut Cursive, t: &map::TMapCell, x: usize, y: usize) {
+    let c = TileRecords[t.Tile as usize].C;
+    let mut text: String = app.find_id::<TextView>("area")
+        .unwrap()
+        .get_content()
+        .source()
+        .to_owned();
+    let cur_map = get_ref_curmap!();
+    let index = (map::LOCAL_MAP_WIDTH + 1) * (y - cur_map.LocalMapTop) + (x - cur_map.LocalMapLeft);
+    text.remove(index);
+    let mut styled_text = StyledString::from(text);
+    log!(index.to_string() + &*(c.to_string()));
+    styled_text.insert_char(
+        index,
+        if t.IsVisible {
+            c.to_string()
+        } else {
+            " ".to_owned()
+        },
+    );
+    log!("No problem");
+    app.find_id::<TextView>("area")
+        .unwrap()
+        .set_content(styled_text);
+    log!("Oo");
 }
 
 pub fn ShowItem(app: &mut Cursive, itm: &game_item::TGameItem) {
@@ -345,16 +517,20 @@ pub fn ShowItem(app: &mut Cursive, itm: &game_item::TGameItem) {
     let mut text: String = app.find_id::<TextView>("area")
         .unwrap()
         .get_content()
+        .source()
         .to_owned();
     let cur_map = get_ref_curmap!();
-    let index = (map::LOCAL_MAP_WIDTH+1)*(itm.y-cur_map.LocalMapTop)
-                +(itm.x-cur_map.LocalMapLeft);
+    let index =
+        (map::LOCAL_MAP_WIDTH + 1) * (itm.y - cur_map.LocalMapTop) + (itm.x - cur_map.LocalMapLeft);
     text.remove(index);
-    text.insert(index,
-                ItemRecords[match itm.IType {
+    text.insert(
+        index,
+        ItemRecords[match itm.IType {
                         ItemHandWeapon => 0,
-                        ItemArmor => 1
-                    } as usize].C);
+                        ItemArmor => 1,
+                    } as usize]
+            .C,
+    );
     app.find_id::<TextView>("area").unwrap().set_content(text);
 }
 
@@ -363,9 +539,9 @@ pub fn ShowHero(app: &mut Cursive, HeroNum: usize) {
     let mut text: String = app.find_id::<TextView>("area")
         .unwrap()
         .get_content()
+        .source()
         .to_owned();
-    let index = unsafe { ((map::LOCAL_MAP_WIDTH + 1)*CURSOR.y
-        + CURSOR.x) as usize };
+    let index = unsafe { ((map::LOCAL_MAP_WIDTH + 1) * CURSOR.y + CURSOR.x) as usize };
     text.remove(index);
     text.insert(index, '@');
     app.find_id::<TextView>("area").unwrap().set_content(text);
@@ -373,21 +549,12 @@ pub fn ShowHero(app: &mut Cursive, HeroNum: usize) {
 
 pub fn ShowHeroInfo(app: &mut Cursive, HeroNum: usize) {
     let hero: &hero::THero = get_ref_curhero!(HeroNum);
-    app.find_id::<TextView>("hero_info")
-        .unwrap()
-        .set_content(texts::STR_HERO_EXP.to_owned()
-            + &hero.Exp.to_string()
-            + "\n"
-            + &texts::STR_HERO_HP.to_owned()
-            + &hero.HP.to_string()
-            + "/"
-            + &hero.MaxHP.to_string()
-            + "\n"
-            + &texts::STR_HERO_XY.to_owned()
-            + &hero.x.to_string()
-            + ", "
-            + &hero.y.to_string()
-        );
+    app.find_id::<TextView>("hero_info").unwrap().set_content(
+        texts::STR_HERO_EXP.to_owned() + &hero.Exp.to_string() + "\n"
+            + &texts::STR_HERO_HP.to_owned() + &hero.HP.to_string() + "/"
+            + &hero.MaxHP.to_string() + "\n" + &texts::STR_HERO_XY.to_owned()
+            + &hero.x.to_string() + ", " + &hero.y.to_string(),
+    );
 }
 
 fn ShowHeroItems(app: &mut Cursive) {
@@ -398,38 +565,45 @@ fn ShowHeroItems(app: &mut Cursive) {
 fn ShowHeroSlots(app: &mut Cursive) {
     create_slots_screen(app);
     game::ShowGame(app);
-} 
+}
 
 pub fn ShowMonster(app: &mut Cursive, m: &monster::TMonster) {
     let mut text: String = app.find_id::<TextView>("area")
         .unwrap()
         .get_content()
+        .source()
         .to_owned();
     let cur_map = get_ref_curmap!();
-    let index = ((map::LOCAL_MAP_WIDTH + 1)*(m.y - cur_map.LocalMapTop)
-                  + (m.x - cur_map.LocalMapLeft)) as usize;
+    let index = ((map::LOCAL_MAP_WIDTH + 1) * (m.y - cur_map.LocalMapTop)
+        + (m.x - cur_map.LocalMapLeft)) as usize;
     text.remove(index);
     text.insert(index, MonsterRecords[m.ID as usize].C);
     app.find_id::<TextView>("area").unwrap().set_content(text);
 }
 
 pub fn ShowInfo(app: &mut Cursive, text: String) {
-    app.find_id::<TextView>("info")
-        .unwrap()
-        .set_content(text);
+    app.find_id::<TextView>("info").unwrap().set_content(text);
 }
 
 pub fn ShowMinimap(app: &mut Cursive) {
     let mut text: String = "_|_|_\n_|_|_\n | | ".to_owned();
     let hero: &hero::THero = get_ref_curhero!();
-    let x = if hero.x < map::MAP_WIDTH/3 {0}
-            else if hero.x < 2*map::MAP_WIDTH/3 {2}
-            else {4};
-    let y = if hero.y < map::MAP_HEIGHT/3 {0}
-            else if hero.y < 2*map::MAP_HEIGHT/3 {1}
-            else {2};
-    text.remove(6*y + x);
-    text.insert(6*y + x, '@');
+    let x = if hero.x < map::MAP_WIDTH / 3 {
+        0
+    } else if hero.x < 2 * map::MAP_WIDTH / 3 {
+        2
+    } else {
+        4
+    };
+    let y = if hero.y < map::MAP_HEIGHT / 3 {
+        0
+    } else if hero.y < 2 * map::MAP_HEIGHT / 3 {
+        1
+    } else {
+        2
+    };
+    text.remove(6 * y + x);
+    text.insert(6 * y + x, '@');
     app.find_id::<TextView>("minimap")
         .unwrap()
         .set_content(text);
@@ -440,6 +614,7 @@ fn ShowCompassInfo(app: &mut Cursive, direction: map::Direction) {
     let mut text = app.find_id::<TextView>("compass")
         .unwrap()
         .get_content()
+        .source()
         .to_owned();
     text.remove(22);
     text.insert(22, ' ');
@@ -453,15 +628,15 @@ fn ShowCompassInfo(app: &mut Cursive, direction: map::Direction) {
         Left => {
             text.remove(22);
             text.insert(22, '<');
-        },
+        }
         Right => {
             text.remove(26);
             text.insert(26, '>');
-        },
+        }
         Up => {
             text.remove(14);
             text.insert(14, '^');
-        },
+        }
         Down => {
             text.remove(34);
             text.insert(34, 'v');
@@ -476,7 +651,7 @@ fn ShowCompassInfo(app: &mut Cursive, direction: map::Direction) {
 
 pub struct Cursor {
     pub x: usize,
-    pub y: usize
+    pub y: usize,
 }
 
 pub static mut CURSOR: Cursor = Cursor { x: 0, y: 0 };
@@ -487,16 +662,24 @@ fn move_cursor(mut app: &mut Cursive, direction: map::Direction) {
         let (mut dx, mut dy) = (0i32, 0i32);
         match direction {
             Up => {
-                dy = if CURSOR.y > 0 {-1} else {0};
-            },
+                dy = if CURSOR.y > 0 { -1 } else { 0 };
+            }
             Down => {
-                dy = if CURSOR.y < map::LOCAL_MAP_HEIGHT - 1 {1} else {0};
-            },
+                dy = if CURSOR.y < map::LOCAL_MAP_HEIGHT - 1 {
+                    1
+                } else {
+                    0
+                };
+            }
             Left => {
-                dx = if CURSOR.x > 0 {-1} else {0};
+                dx = if CURSOR.x > 0 { -1 } else { 0 };
             }
             Right => {
-                dx = if CURSOR.x < map::LOCAL_MAP_WIDTH - 1 {1} else {0};
+                dx = if CURSOR.x < map::LOCAL_MAP_WIDTH - 1 {
+                    1
+                } else {
+                    0
+                };
             }
         }
 
@@ -510,25 +693,25 @@ fn move_cursor(mut app: &mut Cursive, direction: map::Direction) {
         }
 
         if !map::FreeTile(
-            &cur_map.Cells[(hero.x as i32 + dx) as usize]
-                [(hero.y as i32 + dy) as usize].Tile) {
+            &cur_map.Cells[(hero.x as i32 + dx) as usize][(hero.y as i32 + dy) as usize].Tile,
+        ) {
             return;
         }
 
         let (prev_x, prev_y) = (CURSOR.x, CURSOR.y);
         if dx >= 0 {
             CURSOR.x += dx as usize;
-            hero.x   += dx as usize;
+            hero.x += dx as usize;
         } else {
             CURSOR.x = (CURSOR.x as i32 + dx) as usize;
-            hero.x   = (hero.x as i32 + dx) as usize;
+            hero.x = (hero.x as i32 + dx) as usize;
         }
         if dy >= 0 {
             CURSOR.y += dy as usize;
-            hero.y   += dy as usize;
+            hero.y += dy as usize;
         } else {
             CURSOR.y = (CURSOR.y as i32 + dy) as usize;
-            hero.y   = (hero.y as i32 + dy) as usize;
+            hero.y = (hero.y as i32 + dy) as usize;
         }
         //ShowInfo(&mut app, CURSOR.x.to_string() + "-" + &CURSOR.y.to_string());
         if prev_x != CURSOR.x || prev_y != CURSOR.y {
@@ -538,11 +721,11 @@ fn move_cursor(mut app: &mut Cursive, direction: map::Direction) {
                 if &cur_cell.Tile == trap {
                     cur_cell.Tile = map::tileGrass;
                     if !hero::SkillTest(app, hero, hero::skillTrapSearch) {
-                        let dam = map::random(0, hero.MaxHP as usize) + 1;//f32::round(hero.MaxHP * 1.1)) + 1;
-                        ShowInfo(app, String::from( texts::STR_TRAP)
-                                                  + "(-"
-                                                  + &dam.to_string()
-                                                  + " points)");
+                        let dam = map::random(0, hero.MaxHP as usize) + 1; //f32::round(hero.MaxHP * 1.1)) + 1;
+                        ShowInfo(
+                            app,
+                            String::from(texts::STR_TRAP) + "(-" + &dam.to_string() + " points)",
+                        );
                         hero::DecHP(app, hero, dam as u32);
                     }
                 }
@@ -556,25 +739,25 @@ fn move_cursor(mut app: &mut Cursive, direction: map::Direction) {
             }
 
             match dx {
-                 1 => ShowCompassInfo(app, Right),
+                1 => ShowCompassInfo(app, Right),
                 -1 => ShowCompassInfo(app, Left),
-                 0 | _ => ()
+                0 | _ => (),
             }
             match dy {
-                 1 => ShowCompassInfo(app, Down),
+                1 => ShowCompassInfo(app, Down),
                 -1 => ShowCompassInfo(app, Up),
-                 0 | _ => ()
+                0 | _ => (),
             }
 
             if hero.x - cur_map.LocalMapLeft < map::SCROLL_DELTA {
                 map::ScrollMap(Left);
             } else if hero.x - cur_map.LocalMapLeft + map::SCROLL_DELTA >= map::LOCAL_MAP_WIDTH {
-                   map::ScrollMap(Right);
+                map::ScrollMap(Right);
             }
             if hero.y - cur_map.LocalMapTop < map::SCROLL_DELTA {
-                   map::ScrollMap(Up);
+                map::ScrollMap(Up);
             } else if hero.y - cur_map.LocalMapTop + map::SCROLL_DELTA >= map::LOCAL_MAP_HEIGHT {
-                   map::ScrollMap(Down);
+                map::ScrollMap(Down);
             }
 
             // Don't change an order of operations!

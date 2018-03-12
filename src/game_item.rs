@@ -1,14 +1,15 @@
 //! This module describes any game items such as artifacts, amulets, etc.
 
 use texts;
+use loggers::log;
 
 const MaxItemInt: usize = 20;
-const MaxRealInt: usize = 20; 
+const MaxRealInt: usize = 20;
 
 #[derive(Debug, PartialEq)]
 pub enum TGameItemType {
     ItemHandWeapon,
-    ItemArmor
+    ItemArmor,
 }
 
 impl Copy for TGameItemType {}
@@ -19,15 +20,16 @@ impl Clone for TGameItemType {
     }
 }
 
+#[derive(Debug)]
 pub struct TGameItem<'tgi> {
     ID: u32,
     pub x: usize,
     pub y: usize,
     pub IType: TGameItemType,
-    pub Name : &'tgi str,
-    Ints : [Option<u32>; MaxItemInt],
+    pub Name: &'tgi str,
+    Ints: [Option<u32>; MaxItemInt],
     Reals: [Option<f32>; MaxRealInt],
-    pub IsVisible: bool
+    pub IsVisible: bool,
 }
 
 impl<'tgi> Copy for TGameItem<'tgi> {}
@@ -38,9 +40,9 @@ impl<'tgi> Clone for TGameItem<'tgi> {
     }
 }
 
-const intAttack_d1: usize  = 0;
-const intAttack_d2: usize  = 1;
-const intAttackHit: usize  = 2;
+const intAttack_d1: usize = 0;
+const intAttack_d2: usize = 1;
+const intAttackHit: usize = 2;
 const intArmorDefence: u32 = 0;
 
 pub const MaxItemTypes: usize = 4;
@@ -51,60 +53,139 @@ pub const ItemTypes: Items = [
         x: 0,
         y: 0,
         IType: TGameItemType::ItemHandWeapon,
-        Name : texts::STR_AXE,
+        Name: texts::STR_AXE,
         // [intAttack_d1, intAttack_d2, intAttackHit(in percents), ...]
-        Ints : [Some(1u32),Some(6),Some(50),None,None,None,None,None,None,None,
-                None,None,None,None,None,None,None,None,None,None],
+        Ints: [
+            Some(1u32),
+            Some(6),
+            Some(50),
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        ],
         Reals: [None; MaxRealInt],
-        IsVisible: false
+        IsVisible: false,
     },
     TGameItem {
         ID: 1,
         x: 0,
         y: 0,
         IType: TGameItemType::ItemHandWeapon,
-        Name : texts::STR_SWORD,
-        Ints : [Some(2u32),Some(4),Some(80),None,None,None,None,None,None,None,
-                None,None,None,None,None,None,None,None,None,None],
+        Name: texts::STR_SWORD,
+        Ints: [
+            Some(2u32),
+            Some(4),
+            Some(80),
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        ],
         Reals: [None; MaxRealInt],
-        IsVisible: false
+        IsVisible: false,
     },
     TGameItem {
         ID: 2,
         x: 0,
         y: 0,
         IType: TGameItemType::ItemArmor,
-        Name : texts::STR_HELM,
-        Ints : [Some(1u32),None,None,None,None,None,None,None,None,None,None,
-                None,None,None,None,None,None,None,None,None],
+        Name: texts::STR_HELM,
+        Ints: [
+            Some(1u32),
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        ],
         Reals: [None; MaxRealInt],
-        IsVisible: false
+        IsVisible: false,
     },
     TGameItem {
         ID: 3,
         x: 0,
         y: 0,
         IType: TGameItemType::ItemArmor,
-        Name : texts::STR_BODYARMOR,
+        Name: texts::STR_BODYARMOR,
         // [intArmorDefence, ...]
-        Ints : [Some(5u32),None,None,None,None,None,None,None,None,None,None,
-                None,None,None,None,None,None,None,None,None],
+        Ints: [
+            Some(5u32),
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        ],
         Reals: [None; MaxRealInt],
-        IsVisible: false
+        IsVisible: false,
     },
 ];
 
-pub const MaxItems: usize = 40;
-pub static mut ITEMS: [TGameItem; MaxItems] = [
-    TGameItem {
-        ID: 0,
-        x: 0,
-        y: 0,
-        IType: TGameItemType::ItemHandWeapon,
-        Name : texts::STR_AXE,
-        // [intAttack_d1, intAttack_d2, intAttackHit(in percents), ...]
-        Ints : [None; MaxItemInt],
-        Reals: [None; MaxRealInt],
-        IsVisible: false
-    }; MaxItems
-];
+pub const MaxItems: usize = 256;
+pub static mut ITEMS: [Option<TGameItem>; MaxItems] = [None; MaxItems];
+
+pub fn GetFreeItemNum() -> Option<usize> {
+    for i in 0..MaxItems {
+        unsafe {
+            if ITEMS[i].is_none() {
+                return Some(i);
+            }
+        }
+    }
+    None
+}

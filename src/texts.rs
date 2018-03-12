@@ -68,13 +68,13 @@ pub const STR_TRAPOK: &str = "You have neutralized a trap!";
 pub const STR_ADD_EXP: &str = "You increased your experience by ";
 pub const STR_TRAPSKILL_OK: &str = "Your skill of neutralizing traps is increased.";
 
-pub const STR_HERO_ITEMS: &str = "Hero's items:";
+pub const STR_HERO_ITEMS: &str = "Hero's items";
 pub const STR_EMPTY_ITEM: &str = "<empty>";
-pub const STR_HERO_ITEMINFO: &str = "Press the `[<key>]` to move the item to `Slots`";
+pub const STR_HERO_ITEMINFO: &str = "Press <Enter> to move the item to `Slots`";
 
-pub const STR_HERO_SLOTITEMS: &str = "Used items:";
+pub const STR_HERO_SLOTITEMS: &str = "Used items";
 pub const SlotName: [&str; hero::MaxSlots] = ["Body:    ", "In hand: "];
-pub const STR_HERO_SLOTINFO: &str = "Press the `[<key>]` to move the slot to `Items`";
+pub const STR_HERO_SLOTINFO: &str = "Press [<key>] to move the slot to `Items`";
 
 pub const STR_GAME_OVER: &str = "
 

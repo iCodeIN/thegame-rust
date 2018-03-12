@@ -6,11 +6,15 @@ use cursive::Cursive;
 
 const DEBUG: bool = true;
 
-pub fn log<S: Into<String>>(message: S) -> Result<()> {
-    if !DEBUG { return Ok(()) };
+pub fn strict_log<S: Into<String>>(message: S) -> Result<()> {
+    if !DEBUG {
+        return Ok(());
+    };
     let mut message: String = message.into();
-    message.push_str("\n\n=====================================================\
-                      ===========================\n\n");
+    message.push_str(
+        "\n\n=====================================================\
+         ===========================\n\n",
+    );
     OpenOptions::new()
         .append(true)
         .create(true)
@@ -19,7 +23,11 @@ pub fn log<S: Into<String>>(message: S) -> Result<()> {
     Ok(())
 }
 
+pub fn log<S: Into<String>>(message: S) {
+    strict_log(message).unwrap_or(());
+}
+
 pub fn logger<T: Debug>(message: &str, arg: T) -> T {
-    log(format!("{}: {:?}", message, arg )).unwrap();
+    strict_log(format!("{}: {:?}", message, arg)).unwrap();
     arg
 }

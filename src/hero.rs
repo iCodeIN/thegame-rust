@@ -34,7 +34,8 @@ pub struct THero<'tgi> {
     pub Exp: u32,
     pub MaxExp: u32,
     pub Level: usize,
-    pub VisLong: usize
+    pub VisLong: usize,
+    pub CurItem: usize
 }
 
 const MaxHeroes: usize = 1;
@@ -53,7 +54,8 @@ pub static mut HEROES: Heroes = [
         Exp: 0,
         MaxExp: 0,
         Level: 0,
-        VisLong: 0}; MaxHeroes];
+        VisLong: 0,
+        CurItem: 0}; MaxHeroes];
 pub static mut CUR_HERO: usize = 0;
 
 fn InitHero(HeroNum: usize) {

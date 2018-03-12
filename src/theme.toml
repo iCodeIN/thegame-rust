@@ -17,18 +17,18 @@ borders = "simple"  # Alternatives are "none" and "outset"
     # If the terminal doesn't support custom color,
     # non-base colors will be skipped.
     shadow     = ["blue"]
-    view       = ["green"]
+    view       = ["black"]
 
     # Array and simple values have the same effect.
-    primary   = ["black"]
+    primary   = ["white"]
     secondary = "magenta"
     tertiary  = "magenta"
 
     # Hex values can use lower or uppercase.
     # (base color MUST be lowercase)
-    title_primary   = "black"
+    title_primary   = "red"
     title_secondary = "blue"
 
     # Lower precision values can use only 3 digits.
-    highlight          = "red"
-    highlight_inactive = "green"
+    highlight          = "yellow"
+    highlight_inactive = "magenta"
