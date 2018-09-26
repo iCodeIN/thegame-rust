@@ -5,5 +5,5 @@ authors = ["root"]
 
 [dependencies]
 rand = "0.4.*"
-cursive = { path = "../git/Cursive" }
-decorators = { git = "https://github.com/Virtuos86/rust-decorators.git" }
+cursive = { git = "https://github.com/gyscos/Cursive.git" }
+#decorators = { git = "https://github.com/Virtuos86/rust-decorators.git" }

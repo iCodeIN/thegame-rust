@@ -1,7 +1,7 @@
 //! This module describes any game items such as artifacts, amulets, etc.
 
-use texts;
 use loggers::log;
+use texts;
 
 const MaxItemInt: usize = 20;
 const MaxRealInt: usize = 20;
@@ -22,12 +22,12 @@ impl Clone for TGameItemType {
 
 #[derive(Debug)]
 pub struct TGameItem<'tgi> {
-    ID: u32,
+    ID: usize,
     pub x: usize,
     pub y: usize,
     pub IType: TGameItemType,
     pub Name: &'tgi str,
-    Ints: [Option<u32>; MaxItemInt],
+    pub Ints: [Option<usize>; MaxItemInt],
     Reals: [Option<f32>; MaxRealInt],
     pub IsVisible: bool,
 }
@@ -40,10 +40,10 @@ impl<'tgi> Clone for TGameItem<'tgi> {
     }
 }
 
-const intAttack_d1: usize = 0;
-const intAttack_d2: usize = 1;
-const intAttackHit: usize = 2;
-const intArmorDefence: u32 = 0;
+pub const intAttack_d1: usize = 0;
+pub const intAttack_d2: usize = 1;
+pub const intAttackHit: usize = 2;
+const intArmorDefence: usize = 0;
 
 pub const MaxItemTypes: usize = 4;
 type Items<'tgi> = [TGameItem<'tgi>; MaxItemTypes as usize];
@@ -56,7 +56,7 @@ pub const ItemTypes: Items = [
         Name: texts::STR_AXE,
         // [intAttack_d1, intAttack_d2, intAttackHit(in percents), ...]
         Ints: [
-            Some(1u32),
+            Some(1usize),
             Some(6),
             Some(50),
             None,
@@ -87,7 +87,7 @@ pub const ItemTypes: Items = [
         IType: TGameItemType::ItemHandWeapon,
         Name: texts::STR_SWORD,
         Ints: [
-            Some(2u32),
+            Some(2usize),
             Some(4),
             Some(80),
             None,
@@ -118,7 +118,7 @@ pub const ItemTypes: Items = [
         IType: TGameItemType::ItemArmor,
         Name: texts::STR_HELM,
         Ints: [
-            Some(1u32),
+            Some(1usize),
             None,
             None,
             None,
@@ -150,7 +150,7 @@ pub const ItemTypes: Items = [
         Name: texts::STR_BODYARMOR,
         // [intArmorDefence, ...]
         Ints: [
-            Some(5u32),
+            Some(5usize),
             None,
             None,
             None,

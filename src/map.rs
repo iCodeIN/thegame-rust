@@ -12,7 +12,7 @@ use game_item;
 use low_level;
 use std::cmp::{max, min};
 
-use decorators::decorators;
+//use decorators::decorators;
 use loggers::{log, logger};
 
 //-------------------------------Constants------------------------------------//
@@ -108,7 +108,9 @@ pub fn MapGeneration(MapLevel: usize) {
     for x in 0..MAP_WIDTH {
         for y in 0..MAP_HEIGHT {
             let mut cell = get_mut_ref_cell!(x, y);
-            if (x < MAP_BORDER) || (x > MAP_WIDTH - MAP_BORDER - 1) || (y < MAP_BORDER)
+            if (x < MAP_BORDER)
+                || (x > MAP_WIDTH - MAP_BORDER - 1)
+                || (y < MAP_BORDER)
                 || (y > MAP_HEIGHT - MAP_BORDER - 1)
             {
                 cell.Tile = tileStone;
@@ -167,7 +169,7 @@ pub fn MapGeneration(MapLevel: usize) {
 
 pub fn ShowMap(app: &mut cursive::Cursive) {
     let cur_map = get_ref_curmap!();
-    low_level::PrepareMap(app);
+    low_level::PrepareMap();
     for x in cur_map.LocalMapLeft..cur_map.LocalMapLeft + LOCAL_MAP_WIDTH {
         for y in cur_map.LocalMapTop..cur_map.LocalMapTop + LOCAL_MAP_HEIGHT {
             low_level::ShowCell(app, get_ref_cell!(x, y), x, y);
@@ -224,8 +226,8 @@ pub fn ScrollMap(direction: Direction) {
 /// random(0, 5); // -> 0 or 1 or 2 or 3 or 4
 /// ```
 pub fn random(start: usize, end: usize) -> usize {
-    use rand::thread_rng;
     use rand::seq::sample_iter;
+    use rand::thread_rng;
     if end <= start {
         panic!("End={} should be more than Start={}", end, start)
     };
@@ -272,7 +274,9 @@ pub fn FreeMapPoint(cur_map: &TMap) -> (usize, usize) {
 /// ```
 pub fn VisiblePoint(x: usize, y: usize) -> bool {
     let cur_map = get_ref_curmap!();
-    get_ref_cell!(x, y).IsVisible && x >= cur_map.LocalMapLeft
-        && x < cur_map.LocalMapLeft + LOCAL_MAP_WIDTH && y >= cur_map.LocalMapTop
+    get_ref_cell!(x, y).IsVisible
+        && x >= cur_map.LocalMapLeft
+        && x < cur_map.LocalMapLeft + LOCAL_MAP_WIDTH
+        && y >= cur_map.LocalMapTop
         && y < cur_map.LocalMapTop + LOCAL_MAP_HEIGHT
 }

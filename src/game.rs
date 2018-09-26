@@ -5,7 +5,7 @@ use low_level;
 use map;
 use monster;
 
-use decorators::decorators;
+//use decorators::decorators;
 use loggers::{log, logger};
 
 pub fn GenerateAll() {
@@ -49,4 +49,12 @@ pub fn StartGame(app: &mut cursive::Cursive) {
     log!("InitHeroes");
     ShowGame(app);
     log!("ShowGame");
+}
+
+pub fn RollDice(d1: usize, d2: usize) -> usize {
+    let mut res = 0;
+    for _ in 0..d1 {
+        res += map::random(0, d2) + 1;
+    }
+    res
 }

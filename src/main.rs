@@ -5,7 +5,6 @@
 //! I use TurboPascal's naming convention ("camel-case"). It's OK =)
 
 #![feature(use_extern_macros)]
-#![feature(proc_macro)]
 #![allow(unused_variables)]
 #![allow(unused_imports)]
 #![allow(non_snake_case)]
@@ -15,9 +14,10 @@
 extern crate cursive;
 extern crate rand;
 
-extern crate decorators;
-use decorators::decorators;
+//extern crate decorators;
+//use decorators::decorators;
 
+mod combat;
 #[macro_use]
 mod macros;
 mod game;

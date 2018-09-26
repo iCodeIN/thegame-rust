@@ -22,39 +22,41 @@ pub const STR_HERO_DIED: &str = "Hero dies!";
 pub const INIT_DIALOG: &str = "Select `Start` or press <Space> key to start playing.\
                                \nSelect `Quit` or press <Esc> key to exit.";
 pub const HELP_EXIT_DIALOG: &str = "Select `Help` to get help.\n\
-                              Select `Quit` to exit.";
+                                    Select `Quit` to exit.";
 
 pub fn help() -> String {
-    format!("`@`: Hero\n\
-             \n\
-             Tiles:\n\
-             `.`: Grass\n\
-             `:`: Ground\n\
-             `+`: Stairs Up\n\
-             `-`: Stairs Down\n\
-             `^`: Tree\n\
-             `X`: Stone\n\
-             \n\
-             Monsters:\n\
-             `p`: {}\n\
-             `%`: {}\n\
-             `!`: {}\n\
-             `#`: {}\n\
-             `&`: {}\n\
-             `j`: {}\n\
-             `A`: {}\n\
-             \n\
-             Shortcuts:\n\
-             `w`, `a`, `s`, `d`: keys for moving of Hero\n\
-             `e`: Hero's slots\n\
-             `i`: Hero's items",
-             STR_MONSTER1,
-             STR_MONSTER2,
-             STR_MONSTER3,
-             STR_MONSTER4,
-             STR_MONSTER5,
-             STR_MONSTER6,
-             STR_MONSTER7
+    format!(
+        "`@`: Hero\n\
+         \n\
+         Tiles:\n\
+         `.`: Grass\n\
+         `:`: Ground\n\
+         `+`: Stairs Up\n\
+         `-`: Stairs Down\n\
+         `^`: Tree\n\
+         `X`: Stone\n\
+         \n\
+         Monsters:\n\
+         `p`: {}\n\
+         `%`: {}\n\
+         `!`: {}\n\
+         `#`: {}\n\
+         `&`: {}\n\
+         `j`: {}\n\
+         `A`: {}\n\
+         \n\
+         Shortcuts:\n\
+         `w`, `a`, `s`, `d`: keys for moving of Hero\n\
+         `e`: Hero's slots\n\
+         `i`: Hero's items\n\
+         `Backspace`: to clear an info area on the right pane",
+        STR_MONSTER1,
+        STR_MONSTER2,
+        STR_MONSTER3,
+        STR_MONSTER4,
+        STR_MONSTER5,
+        STR_MONSTER6,
+        STR_MONSTER7
     )
 }
 
@@ -63,10 +65,15 @@ pub const STR_SWORD: &str = "Sword";
 pub const STR_BODYARMOR: &str = "Bodyarmor";
 pub const STR_HELM: &str = "Helm";
 
-
 pub const STR_TRAPOK: &str = "You have neutralized a trap!";
 pub const STR_ADD_EXP: &str = "You increased your experience by ";
+pub const STR_HANDWEAPONSKILL_OK: &str = "Now melee skills are increased.";
+pub const STR_BAD_ATTACK: &str = "You missed…";
 pub const STR_TRAPSKILL_OK: &str = "Your skill of neutralizing traps is increased.";
+pub const STR_NONE_WEAPONS: &str = "You have no weapons.";
+pub const STR_BIG_SKIN: &str = "Monster's skin stood your blow…";
+pub const STR_ATTACK: &str = "You wounded the monster!";
+pub const STR_MON_KILL: &str = "The monster is dead!";
 
 pub const STR_HERO_ITEMS: &str = "Hero's items";
 pub const STR_EMPTY_ITEM: &str = "<empty>";
