@@ -7,13 +7,13 @@ use monster;
 use texts;
 
 pub fn HeroAttack(app: &mut ::cursive::Cursive, h: &mut hero::THero, m: usize) {
-    if !hero::SkillTest(app, h, hero::skillHandWeapon) {
-        low_level::ShowInfo(app, texts::STR_BAD_ATTACK.to_string());
-        return;
-    }
     let w = hero::GetHeroWeapon(h);
     if w.is_none() {
         low_level::ShowInfo(app, texts::STR_NONE_WEAPONS.to_string());
+        return;
+    }
+    if !hero::SkillTest(app, h, hero::skillHandWeapon) {
+        low_level::ShowInfo(app, texts::STR_BAD_ATTACK.to_string());
         return;
     }
     let dam = WeaponDamage(h.Slots[w.unwrap()].unwrap());
@@ -23,11 +23,18 @@ pub fn HeroAttack(app: &mut ::cursive::Cursive, h: &mut hero::THero, m: usize) {
         return;
     }
 
-    unsafe { monster::MONSTERS[m].HP -= dam - skin };
+    unsafe {
+        if monster::MONSTERS[m].HP >= (dam - skin) {
+            monster::MONSTERS[m].HP -= dam - skin;
+        } else {
+            monster::MONSTERS[m].HP = 0;
+        }
+        low_level::ShowInfo(app, format!("{}, -{}", monster::MONSTERS[m].HP, dam - skin));
+    };
     low_level::ShowInfo(app, format!("{}{}", texts::STR_ATTACK, dam - skin));
 
     unsafe {
-        if monster::MONSTERS[m].HP <= 0 {
+        if monster::MONSTERS[m].HP == 0 {
             low_level::ShowInfo(
                 app,
                 format!("{}{}", monster::MONSTERS[m].Name, texts::STR_MON_KILL),

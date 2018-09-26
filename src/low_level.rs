@@ -216,12 +216,12 @@ pub fn create_main_screen(app: &mut Cursive) {
                             TextView::empty()
                                 .center()
                                 .with_id("info")
-                                .fixed_size((9, 5)),
+                                .fixed_size((9, 20)),
                         ).child(TextView::empty().with_id("sep2").fixed_size((9, 1)))
                         .child(
                             TextView::empty()
                                 .with_id("hero_info")
-                                .fixed_size((24, map::LOCAL_MAP_HEIGHT - 5 - 1 - 5 - 1 - 9)),
+                                .fixed_size((24, map::LOCAL_MAP_HEIGHT - 5 - 1 - 20 - 1 - 9)),
                         ).child(
                             Dialog::around(TextView::new(texts::HELP_EXIT_DIALOG))
                                 .button("Help", |a| a.add_layer(Dialog::info(texts::help())))
