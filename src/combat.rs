@@ -53,3 +53,77 @@ fn WeaponDamage(itm: game_item::TGameItem) -> usize {
         itm.Ints[game_item::intAttack_d2].unwrap(),
     )
 }
+
+pub fn MonstersAttack(app: &mut ::cursive::Cursive) {
+    let curhero = get_mut_ref_curhero!();
+    for i in 0..monster::MaxMonsters {
+        if unsafe { monster::MONSTERS[i].HP > 0 && CanAttack(i, hero::CUR_HERO) } {
+            MonsterAttack(app, i, curhero);
+        }
+    }
+}
+
+fn CanAttack(MonsterNum: usize, HeroNum: usize) -> bool {
+    unsafe {
+        Distance(
+            (hero::HEROES[HeroNum].x, hero::HEROES[HeroNum].y),
+            (
+                monster::MONSTERS[MonsterNum].x,
+                monster::MONSTERS[MonsterNum].y,
+            ),
+        ) == 1
+    }
+}
+
+fn Distance(hero_xy: (usize, usize), monster_xy: (usize, usize)) -> usize {
+    use std::cmp::{max, min};
+    max(hero_xy.0, hero_xy.1) - min(hero_xy.0, hero_xy.1) + max(monster_xy.0, monster_xy.1)
+        - min(monster_xy.0, monster_xy.1)
+}
+
+fn MonsterAttack(app: &mut ::cursive::Cursive, MonsterNum: usize, h: &mut hero::THero) {
+    if hero::SkillTest(app, h, hero::skillDefence) {
+        unsafe {
+            low_level::ShowInfo(
+                app,
+                format!(
+                    "{} {}",
+                    monster::MONSTERS[MonsterNum].Name,
+                    texts::STR_MON_STOP
+                ),
+            );
+        }
+        return;
+    }
+    let dam = unsafe {
+        game::RollDice(
+            monster::MONSTERS[MonsterNum].Ad1,
+            monster::MONSTERS[MonsterNum].Ad2,
+        )
+    };
+    let def = hero::GetHeroDefence(h);
+    if dam <= def {
+        unsafe {
+            low_level::ShowInfo(
+                app,
+                format!(
+                    "{} {}",
+                    monster::MONSTERS[MonsterNum].Name,
+                    texts::STR_MON_DEF
+                ),
+            );
+        }
+        return;
+    }
+    unsafe {
+        low_level::ShowInfo(
+            app,
+            format!(
+                "{} {}",
+                monster::MONSTERS[MonsterNum].Name,
+                texts::STR_MON_ATTACK
+            ),
+        );
+    }
+    hero::IncHP(h, dam - def, true);
+}

@@ -8,4 +8,4 @@ pub const ExpLevel_Table: [usize; MaxPlayerLevel as usize] =
 pub const HPLevel_Table: [usize; MaxPlayerLevel as usize] = [10, 20, 30, 50, 80, 130, 210, 340];
 
 // percents
-pub const BaseSkill_Table: [usize; hero::MaxSkills as usize] = [30, 20];
+pub const BaseSkill_Table: [usize; hero::MaxSkills as usize] = [30, 20, 25];

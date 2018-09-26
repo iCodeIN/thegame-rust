@@ -43,7 +43,7 @@ impl<'tgi> Clone for TGameItem<'tgi> {
 pub const intAttack_d1: usize = 0;
 pub const intAttack_d2: usize = 1;
 pub const intAttackHit: usize = 2;
-const intArmorDefence: usize = 0;
+pub const intArmorDefence: usize = 0;
 
 pub const MaxItemTypes: usize = 4;
 type Items<'tgi> = [TGameItem<'tgi>; MaxItemTypes as usize];

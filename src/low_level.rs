@@ -621,6 +621,7 @@ fn move_cursor(mut app: &mut Cursive, direction: map::Direction) {
         if mnstr.is_some() {
             //ShowInfo(app, mnstr.unwrap().to_string());
             combat::HeroAttack(app, hero, mnstr.unwrap());
+            combat::MonstersAttack(app);
             return;
         }
         //
@@ -661,7 +662,7 @@ fn move_cursor(mut app: &mut Cursive, direction: map::Direction) {
                 if &cur_cell.Tile == live {
                     ShowInfo(app, String::from(texts::STR_LIVE));
                     let inc = hero.MaxHP;
-                    hero::IncHP(hero, inc);
+                    hero::IncHP(hero, inc, false);
                 }
             }
 

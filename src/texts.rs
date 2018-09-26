@@ -73,7 +73,11 @@ pub const STR_TRAPSKILL_OK: &str = "Your skill of neutralizing traps is increase
 pub const STR_NONE_WEAPONS: &str = "You have no weapons.";
 pub const STR_BIG_SKIN: &str = "Monster's skin stood your blow…";
 pub const STR_ATTACK: &str = "You wounded the monster!";
-pub const STR_MON_KILL: &str = "The monster is dead!";
+pub const STR_MON_KILL: &str = "is dead!";
+pub const STR_MON_STOP: &str = ": attack repulsed!";
+pub const STR_MON_DEF: &str = "strikes, but doesn't penetrate your defense…";
+pub const STR_DEFENCESKILL_OK: &str = "You repulsed a blow!";
+pub const STR_MON_ATTACK: &str = "attacks!";
 
 pub const STR_HERO_ITEMS: &str = "Hero's items";
 pub const STR_EMPTY_ITEM: &str = "<empty>";

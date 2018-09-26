@@ -1,12 +1,5 @@
 //! This module describes a game map.
 
-#![allow(unused_variables)]
-#![allow(unused_mut)]
-#![allow(non_snake_case)]
-#![allow(non_upper_case_globals)]
-#![allow(dead_code)]
-#![allow(unused_variables)]
-
 use cursive;
 use game_item;
 use low_level;

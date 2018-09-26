@@ -12,9 +12,10 @@ const chrDEX: u32 = 1;
 const chrCON: u32 = 2;
 const chrIQ: u32 = 3;
 
-pub const MaxSkills: usize = 2;
+pub const MaxSkills: usize = 3;
 pub const skillHandWeapon: usize = 0;
 pub const skillTrapSearch: usize = 1;
+pub const skillDefence: usize = 2;
 
 pub const MaxHeroItems: usize = 12;
 
@@ -43,7 +44,7 @@ const MaxHeroes: usize = 1;
 pub type Heroes<'tgi> = [THero<'tgi>; MaxHeroes];
 pub static mut HEROES: Heroes = [THero {
     Chars: [0, 0, 0, 0],
-    Skills: [0, 0],
+    Skills: [0, 0, 0],
     Items: [None; MaxHeroItems],
     Slots: [None; MaxSlots],
     x: 0,
@@ -129,6 +130,7 @@ pub fn SkillTest(app: &mut cursive::Cursive, H: &mut THero, skl: usize) -> bool 
     }
     match skl {
         skillHandWeapon => SuccessSkillTest(app, H, skillHandWeapon),
+        skillDefence => SuccessSkillTest(app, H, skillDefence),
         skillTrapSearch => {
             low_level::ShowInfo(app, texts::STR_TRAPOK.to_owned());
             let H_Level = H.Level;
@@ -146,6 +148,12 @@ fn SuccessSkillTest(app: &mut cursive::Cursive, H: &mut THero, skl: usize) {
             if map::random(0, 50) == 0 {
                 low_level::ShowInfo(app, texts::STR_HANDWEAPONSKILL_OK.to_owned());
                 H.Skills[skillHandWeapon] += 1;
+            }
+        }
+        skillDefence => {
+            if map::random(0, 100) == 0 {
+                low_level::ShowInfo(app, texts::STR_DEFENCESKILL_OK.to_owned());
+                H.Skills[skillDefence] += 1;
             }
         }
         skillTrapSearch => {
@@ -166,8 +174,11 @@ pub fn DecHP(mut app: &mut cursive::Cursive, hero: &mut THero, dam: usize) {
     }
 }
 
-pub fn IncHP(hero: &mut THero, inc: usize) {
-    hero.HP = min(hero.HP + inc, hero.MaxHP);
+pub fn IncHP(hero: &mut THero, inc: usize, sign: bool) {
+    match sign {
+        true => hero.HP = min(hero.HP - inc, hero.MaxHP),
+        false => hero.HP = min(hero.HP + inc, hero.MaxHP),
+    }
 }
 
 pub fn IncXP(app: &mut cursive::Cursive, H: &mut THero, axp: usize) {
@@ -210,4 +221,12 @@ pub fn GetHeroWeapon(H: &THero) -> Option<usize> {
         None => None,
         _ => Some(slotHands),
     }
+}
+
+pub fn GetHeroDefence(h: &THero) -> usize {
+    let mut d = 0;
+    if let Some(itm) = h.Slots[slotBody] {
+        d += itm.Ints[game_item::intArmorDefence].unwrap();
+    }
+    d
 }
