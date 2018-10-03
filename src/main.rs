@@ -34,7 +34,7 @@ const DEBUG: bool = true;
 
 fn main() -> Result<(), cursive::theme::Error> {
     let mut app: cursive::Cursive = cursive::Cursive::default();
-    app.load_theme_file("~/.config/thegame/assets/theme.toml")?;
+    app.load_theme_file("assets/theme.toml")?;
     low_level::VideoInitialize();
     low_level::InitApp(&mut app);
     app.run();
