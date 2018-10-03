@@ -29,7 +29,6 @@ pub fn HeroAttack(app: &mut ::cursive::Cursive, h: &mut hero::THero, m: usize) {
         } else {
             monster::MONSTERS[m].HP = 0;
         }
-        low_level::ShowInfo(app, format!("{}, -{}", monster::MONSTERS[m].HP, dam - skin));
     };
     low_level::ShowInfo(app, format!("{}{}", texts::STR_ATTACK, dam - skin));
 
@@ -87,7 +86,7 @@ fn MonsterAttack(app: &mut ::cursive::Cursive, MonsterNum: usize, h: &mut hero::
             low_level::ShowInfo(
                 app,
                 format!(
-                    "{} {}",
+                    "{}{}",
                     monster::MONSTERS[MonsterNum].Name,
                     texts::STR_MON_STOP
                 ),
@@ -107,7 +106,7 @@ fn MonsterAttack(app: &mut ::cursive::Cursive, MonsterNum: usize, h: &mut hero::
             low_level::ShowInfo(
                 app,
                 format!(
-                    "{} {}",
+                    "{}{}",
                     monster::MONSTERS[MonsterNum].Name,
                     texts::STR_MON_DEF
                 ),
@@ -119,7 +118,7 @@ fn MonsterAttack(app: &mut ::cursive::Cursive, MonsterNum: usize, h: &mut hero::
         low_level::ShowInfo(
             app,
             format!(
-                "{} {}",
+                "{}{}",
                 monster::MONSTERS[MonsterNum].Name,
                 texts::STR_MON_ATTACK
             ),

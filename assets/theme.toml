@@ -16,8 +16,8 @@ background = "black"
 # If the value is an array, the first valid color will be used.
 # If the terminal doesn't support custom color,
 # non-base colors will be skipped.
-shadow     = ["blue"]
-view       = ["black"]
+shadow     = ["black"]
+view       = ["blue"]
 
 # Array and simple values have the same effect.
 primary   = ["white"]

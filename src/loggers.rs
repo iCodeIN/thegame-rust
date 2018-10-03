@@ -4,10 +4,8 @@ use std::fs::OpenOptions;
 
 use cursive::Cursive;
 
-const DEBUG: bool = true;
-
 pub fn strict_log<S: Into<String>>(message: S) -> Result<()> {
-    if !DEBUG {
+    if !::DEBUG {
         return Ok(());
     };
     let mut message: String = message.into();

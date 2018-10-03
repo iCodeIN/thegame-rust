@@ -247,13 +247,14 @@ pub fn FreeTile(tile: &Tile) -> bool {
 /// let (x, y) = FreeMapPoint(get_ref_curmap!());
 /// ```
 pub fn FreeMapPoint(cur_map: &TMap) -> (usize, usize) {
+    let curhero = get_ref_curhero!();
     loop {
         let (x, y) = (
             random(MAP_BORDER, MAP_WIDTH - MAP_BORDER - 1),
             random(MAP_BORDER, MAP_HEIGHT - MAP_BORDER - 1),
         );
         if FreeTile(&cur_map.Cells[x][y].Tile) {
-            break (x, y);
+            if x != curhero.x || y != curhero.y { break (x, y); } else { continue; }
         };
     }
 }

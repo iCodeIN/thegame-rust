@@ -175,8 +175,9 @@ pub fn DecHP(mut app: &mut cursive::Cursive, hero: &mut THero, dam: usize) {
 }
 
 pub fn IncHP(hero: &mut THero, inc: usize, sign: bool) {
+    log!(format!("hero: {}, inc: {}, sign: {}", hero.x, inc, sign));
     match sign {
-        true => hero.HP = min(hero.HP - inc, hero.MaxHP),
+        true => hero.HP = if hero.HP >= inc { hero.HP - inc } else { 0 },
         false => hero.HP = min(hero.HP + inc, hero.MaxHP),
     }
 }

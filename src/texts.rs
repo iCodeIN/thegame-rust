@@ -60,6 +60,8 @@ pub fn help() -> String {
     )
 }
 
+pub const STR_MOVE_ITEM_TO_SLOTS : &str = "You move an item to your slots: ";
+pub const STR_MOVE_SLOT_TO_ITEMS : &str = "You move an item from slots to items: ";
 pub const STR_AXE: &str = "Axe";
 pub const STR_SWORD: &str = "Sword";
 pub const STR_BODYARMOR: &str = "Bodyarmor";
@@ -72,12 +74,12 @@ pub const STR_BAD_ATTACK: &str = "You missed…";
 pub const STR_TRAPSKILL_OK: &str = "Your skill of neutralizing traps is increased.";
 pub const STR_NONE_WEAPONS: &str = "You have no weapons.";
 pub const STR_BIG_SKIN: &str = "Monster's skin stood your blow…";
-pub const STR_ATTACK: &str = "You wounded the monster!";
-pub const STR_MON_KILL: &str = "is dead!";
+pub const STR_ATTACK: &str = "You do several points damage: ";
+pub const STR_MON_KILL: &str = " is dead!";
 pub const STR_MON_STOP: &str = ": attack repulsed!";
-pub const STR_MON_DEF: &str = "strikes, but doesn't penetrate your defense…";
+pub const STR_MON_DEF: &str = " strikes, but doesn't penetrate your defense…";
 pub const STR_DEFENCESKILL_OK: &str = "You repulsed a blow!";
-pub const STR_MON_ATTACK: &str = "attacks!";
+pub const STR_MON_ATTACK: &str = " attacks!";
 
 pub const STR_HERO_ITEMS: &str = "Hero's items";
 pub const STR_EMPTY_ITEM: &str = "<empty>";

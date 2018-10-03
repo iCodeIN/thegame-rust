@@ -13,7 +13,7 @@ pub use cursive::Cursive;
 use cursive::event::Key;
 //use cursive::menu::MenuTree;
 use cursive::traits::*;
-use cursive::views::{Dialog, LinearLayout, TextView};
+use cursive::views::{Dialog, LinearLayout, ScrollView, TextView};
 
 //use decorators::decorators;
 use loggers::{log, logger};
@@ -147,10 +147,10 @@ fn enable_main_shortcuts(app: &mut Cursive) {
         ClearInfo(a);
     });
     app.add_global_callback(Key::Esc, |_| {});
-    app.add_global_callback(Key::Up, |a| move_cursor(a, Up));
-    app.add_global_callback(Key::Down, |a| move_cursor(a, Down));
-    app.add_global_callback(Key::Left, |a| move_cursor(a, Left));
-    app.add_global_callback(Key::Right, |a| move_cursor(a, Right));
+    //app.add_global_callback(Key::Up, |a| move_cursor(a, Up));
+    //app.add_global_callback(Key::Down, |a| move_cursor(a, Down));
+    //app.add_global_callback(Key::Left, |a| move_cursor(a, Left));
+    //app.add_global_callback(Key::Right, |a| move_cursor(a, Right));
     app.add_global_callback('e', |a| ShowHeroSlots(a));
     app.add_global_callback('i', |a| ShowHeroItems(a));
     app.add_global_callback('w', |a| move_cursor(a, Up));
@@ -212,12 +212,9 @@ pub fn create_main_screen(app: &mut Cursive) {
                                         .fixed_size((9, 5)),
                                 ),
                         ).child(TextView::empty().with_id("sep1").fixed_size((9, 1)))
-                        .child(
-                            TextView::empty()
-                                .center()
-                                .with_id("info")
-                                .fixed_size((9, 20)),
-                        ).child(TextView::empty().with_id("sep2").fixed_size((9, 1)))
+                        .child(ScrollView::new(LinearLayout::vertical()
+                            .child(TextView::empty().with_id("info")
+                        )).with_id("history").fixed_size((24, 20))).child(TextView::empty().with_id("sep2").fixed_size((9, 1)))
                         .child(
                             TextView::empty()
                                 .with_id("hero_info")
@@ -374,6 +371,7 @@ fn move_slot_to_items(app: &mut Cursive, index: usize) {
     if slot.is_some() && free_bag_index.is_some() {
         hero.Items[free_bag_index.unwrap()] = slot;
         hero.Slots[index as usize] = None;
+        ShowInfo(app, texts::STR_MOVE_SLOT_TO_ITEMS.to_owned() + slot.unwrap().Name);
     }
     app.pop_layer();
     create_slots_screen(app);
@@ -387,6 +385,7 @@ fn move_item_to_slots(app: &mut Cursive, index: usize) {
         if free_slot_index.is_some() {
             hero.Slots[free_slot_index.unwrap()] = item;
             hero.Items[index as usize] = None;
+        ShowInfo(app, texts::STR_MOVE_ITEM_TO_SLOTS.to_owned() + item.unwrap().Name);
         }
     }
     app.pop_layer();
@@ -493,7 +492,19 @@ pub fn ShowMonster(app: &mut Cursive, m: &monster::TMonster) {
 }
 
 pub fn ShowInfo(app: &mut Cursive, text: String) {
-    app.find_id::<TextView>("info").unwrap().set_content(text);
+    let mut old_text = app
+        .find_id::<TextView>("info")
+        .unwrap()
+        .get_content()
+        .source()
+        .to_string();
+    if old_text.len() > 1024 {
+        old_text = old_text.splitn(2, "\n").collect::<Vec<_>>()[1].into()
+    };
+    app.find_id::<TextView>("info").unwrap().set_content(
+        old_text + "\n- " + &text
+    );
+    app.find_id::<ScrollView<LinearLayout>>("history").unwrap().scroll_to_bottom();
 }
 
 pub fn ClearInfo(app: &mut Cursive) {
@@ -598,7 +609,7 @@ fn move_cursor(mut app: &mut Cursive, direction: map::Direction) {
                 };
             }
         }
-
+        ShowInfo(app, format!("{:?}, {:?}", dx, dy));
         let cur_map = get_ref_curmap_wo_unsafe!();
         let hero: &mut hero::THero = get_mut_ref_curhero_wo_unsafe!(hero::CUR_HERO);
 
@@ -619,7 +630,6 @@ fn move_cursor(mut app: &mut Cursive, direction: map::Direction) {
             monster::IsMonsterOnTile((hero.x as i32 + dx) as usize, (hero.y as i32 + dy) as usize);
 
         if mnstr.is_some() {
-            //ShowInfo(app, mnstr.unwrap().to_string());
             combat::HeroAttack(app, hero, mnstr.unwrap());
             combat::MonstersAttack(app);
             return;
@@ -700,6 +710,7 @@ pub fn HeroDied(app: &mut Cursive) {
 }
 
 fn GameOverAnimation(app: &mut Cursive) {
+    disable_current_shortcuts(app);
     app.find_id::<TextView>("area")
         .unwrap()
         .set_content(texts::STR_GAME_OVER);
