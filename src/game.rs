@@ -28,11 +28,8 @@ pub fn ShowItems(app: &mut cursive::Cursive) {
 
 pub fn ShowGame(app: &mut cursive::Cursive) {
     map::ShowMap(app);
-    log!("ShowMap");
     ShowItems(app);
-    log!("ShowItems");
     monster::ShowMonsters(app);
-    log!("ShowMonsters");
     unsafe {
         low_level::ShowHero(app, hero::CUR_HERO);
         low_level::ShowHeroInfo(app, hero::CUR_HERO);
@@ -42,13 +39,9 @@ pub fn ShowGame(app: &mut cursive::Cursive) {
 
 pub fn StartGame(app: &mut cursive::Cursive) {
     app.pop_layer();
-    log!("First");
     low_level::create_main_screen(app);
-    log!("create_main_screen");
     hero::InitHeroes();
-    log!("InitHeroes");
     ShowGame(app);
-    log!("ShowGame");
 }
 
 pub fn RollDice(d1: usize, d2: usize) -> usize {

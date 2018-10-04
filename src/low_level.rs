@@ -1,4 +1,5 @@
 use std;
+use std::cmp::max;
 
 use combat;
 use game;
@@ -13,7 +14,7 @@ pub use cursive::Cursive;
 use cursive::event::Key;
 //use cursive::menu::MenuTree;
 use cursive::traits::*;
-use cursive::views::{Dialog, LinearLayout, ScrollView, TextView};
+use cursive::views::{Dialog, LinearLayout, SelectView, ScrollView, TextView};
 
 //use decorators::decorators;
 use loggers::{log, logger};
@@ -133,6 +134,7 @@ fn disable_current_shortcuts(app: &mut Cursive) {
     }
     use map::Direction::*;
     app.clear_global_callbacks(Key::Backspace);
+    app.clear_global_callbacks(Key::Ins);
     app.clear_global_callbacks(Key::Esc);
     app.clear_global_callbacks(Key::Up);
     app.clear_global_callbacks(Key::Down);
@@ -147,6 +149,7 @@ fn enable_main_shortcuts(app: &mut Cursive) {
         ClearInfo(a);
     });
     app.add_global_callback(Key::Esc, |_| {});
+    app.add_global_callback(Key::Ins, take_item);
     //app.add_global_callback(Key::Up, |a| move_cursor(a, Up));
     //app.add_global_callback(Key::Down, |a| move_cursor(a, Down));
     //app.add_global_callback(Key::Left, |a| move_cursor(a, Left));
@@ -286,9 +289,7 @@ fn create_init_screen(app: &mut Cursive) {
 fn create_slots_screen(app: &mut Cursive) {
     disable_current_shortcuts(app);
     let hero = get_ref_curhero!();
-    let mut text = String::from("");
-    text.push_str(texts::STR_HERO_SLOTITEMS);
-    text.push_str("\n\n");
+    let mut list: SelectView<usize> = SelectView::new();
     for i in 0..hero::MaxSlots {
         let mut character: char;
         if i < 10 {
@@ -298,38 +299,39 @@ fn create_slots_screen(app: &mut Cursive) {
         } else {
             panic!("Too many slots: {:?}!", i);
         }
-        text.push_str(texts::SlotName[i]);
-        match hero.Slots[i] {
-            None => {
-                text.push_str(&*(format!("[{}] {}", character, texts::STR_EMPTY_ITEM)));
-                text.push_str("\n");
-            }
-            Some(item) => {
-                text.push_str(&*(format!("[{}] {}", character, item.Name)));
-                text.push_str("\n");
-            }
-        };
+        list.add_item(format!("[{}] {}", character, match hero.Slots[i] {
+            None => texts::STR_EMPTY_ITEM,
+            Some(item) => item.Name,
+        }), i);
         app.add_global_callback(character, move |a| {
             move_slot_to_items(a, i);
         });
     }
-    text.push_str("\n\n");
-    text.push_str(texts::STR_HERO_SLOTINFO);
-    app.add_layer(
-        LinearLayout::vertical().child(Dialog::around(TextView::new(text)).button("Back", |a| {
+    list.set_on_submit(|a, i| {
+        move_slot_to_items(a, *i);
+    });
+    app.add_layer(Dialog::new().button("Back", |a| {
             a.pop_layer();
             disable_current_shortcuts(a);
             enable_main_shortcuts(a);
-        })),
-    )
+        })
+        .title(texts::STR_HERO_SLOTITEMS)
+        .content(LinearLayout::vertical()
+            .child(TextView::new("\n"))
+            .child(list.with_id("slots_list"))
+            .child(TextView::new(format!("\n{}", texts::STR_HERO_SLOTINFO))))
+    );
+    app.add_global_callback('q', |a| {
+        a.pop_layer();
+        disable_current_shortcuts(a);
+        enable_main_shortcuts(a);
+    })
 }
 
 fn create_items_screen(app: &mut Cursive) {
     disable_current_shortcuts(app);
     let hero = get_ref_curhero!();
-    let mut text = String::from("");
-    text.push_str(texts::STR_HERO_ITEMS);
-    text.push_str("\n\n");
+    let mut list: SelectView<usize> = SelectView::new();
     for i in 0..hero::MaxHeroItems {
         let mut character: char;
         if i < 10 {
@@ -339,29 +341,35 @@ fn create_items_screen(app: &mut Cursive) {
         } else {
             panic!("Too many items: {:?}!", i);
         }
-        match hero.Items[i] {
-            None => {
-                text.push_str(&*(format!("[{}] {}", character, texts::STR_EMPTY_ITEM)));
-                text.push_str("\n");
-            }
-            Some(item) => {
-                text.push_str(&*(format!("[{}] {}", character, item.Name)));
-                text.push_str("\n");
-            }
-        };
+        list.add_item(format!("[{}] {}", character, match hero.Items[i] {
+            None => texts::STR_EMPTY_ITEM,
+            Some(item) => item.Name,
+        }), i);
         app.add_global_callback(character, move |a| {
             move_item_to_slots(a, i);
         });
     }
-    text.push_str("\n\n");
-    text.push_str(texts::STR_HERO_ITEMINFO);
-    app.add_layer(
-        LinearLayout::vertical().child(Dialog::around(TextView::new(text)).button("Back", |a| {
+    list.set_on_submit(|a, i| {
+        move_item_to_slots(a, *i);
+    });
+    app.add_layer(Dialog::new().button("Back", |a| {
             a.pop_layer();
             disable_current_shortcuts(a);
             enable_main_shortcuts(a);
-        })),
-    )
+        })
+        .title(texts::STR_HERO_ITEMS)
+        .content(LinearLayout::vertical()
+            .child(TextView::new("\n"))
+            .child(list.with_id("items_list"))
+            .child(TextView::new(format!("\n{}", texts::STR_HERO_ITEMINFO))))
+        .with_id("d")
+    );
+    app.add_global_callback('q', |a| {
+        a.pop_layer();
+        disable_current_shortcuts(a);
+        enable_main_shortcuts(a);
+    });
+    app.add_global_callback(Key::Backspace, throw_item);
 }
 
 fn move_slot_to_items(app: &mut Cursive, index: usize) {
@@ -392,6 +400,62 @@ fn move_item_to_slots(app: &mut Cursive, index: usize) {
     create_items_screen(app);
 }
 
+fn throw_item(app: &mut Cursive) {
+    use game_item::ITEMS;
+    let selected_id = app.find_id::<SelectView<usize>>("items_list").unwrap().selected_id();
+    let i = game_item::GetFreeItemNum();
+    if let Some(i) = i {
+        let mut curhero = get_mut_ref_curhero!();
+        unsafe {
+            let item = curhero.Items[selected_id.unwrap()];
+            if item.is_none() { return; }
+            let item = item.unwrap();
+
+            let (x, y) = (curhero.x, curhero.y);
+            for i in ITEMS.iter() {
+                if let Some(itm) = i {
+                    if itm.x == x && itm.y == y {
+                        ShowInfo(app, "There is the busy tile! Cannot throw the item.".to_owned());
+                        return;
+                    }
+                }
+            }
+
+            ITEMS[i] = Some(game_item::TGameItem {
+                ID: item.ID,
+                x: curhero.x,
+                y: curhero.y,
+                IType: item.IType,
+                Name: item.Name,
+                Ints: item.Ints,
+                Reals: item.Reals,
+                IsVisible: item.IsVisible,
+            });
+        }
+        curhero.Items[selected_id.unwrap()] = None;
+        app.pop_layer();
+        create_items_screen(app);
+    }
+}
+
+fn take_item(app: &mut Cursive) {
+    use game_item::ITEMS;
+    let mut _curhero = get_mut_ref_curhero!();
+    let index = hero::GetFreeItem(_curhero);
+    if index.is_none() { return; }
+    unsafe {
+        for (n, i) in ITEMS.iter().enumerate() {
+            if let Some(itm) = i {
+                if itm.x == _curhero.x && itm.y == _curhero.y {
+                    _curhero.Items[index.unwrap()] = *i;
+                    ITEMS[n] = None;
+                    break;
+                }
+            }
+        }
+    }
+}
+
 pub fn VideoInitialize() {}
 
 pub fn PrepareMap() {}
@@ -420,6 +484,7 @@ pub fn ShowItem(app: &mut Cursive, itm: &game_item::TGameItem) {
         .source()
         .to_owned();
     let cur_map = get_ref_curmap!();
+    if itm.y < cur_map.LocalMapTop || itm.x < cur_map.LocalMapLeft { return; }
     let index =
         (map::LOCAL_MAP_WIDTH + 1) * (itm.y - cur_map.LocalMapTop) + (itm.x - cur_map.LocalMapLeft);
     text.remove(index);
@@ -434,15 +499,19 @@ pub fn ShowItem(app: &mut Cursive, itm: &game_item::TGameItem) {
     app.find_id::<TextView>("area").unwrap().set_content(text);
 }
 
-pub fn ShowHero(app: &mut Cursive, _HeroNum: usize) {
-    //let hero: &hero::THero = get_ref_curhero!(HeroNum);
+pub fn ShowHero(app: &mut Cursive, HeroNum: usize) {
     let mut text: String = app
         .find_id::<TextView>("area")
         .unwrap()
         .get_content()
         .source()
         .to_owned();
-    let index = unsafe { ((map::LOCAL_MAP_WIDTH + 1) * CURSOR.y + CURSOR.x) as usize };
+    let cur_map = get_ref_curmap!();
+    let h = unsafe { &hero::HEROES[HeroNum] };
+    if h.y < cur_map.LocalMapTop || h.x < cur_map.LocalMapLeft { return; }
+    //let index = unsafe { ((map::LOCAL_MAP_WIDTH + 1) * CURSOR.y + CURSOR.x) as usize };
+    let index =
+        (map::LOCAL_MAP_WIDTH + 1) * (h.y - cur_map.LocalMapTop) + (h.x - cur_map.LocalMapLeft);
     text.remove(index);
     text.insert(index, '@');
     app.find_id::<TextView>("area").unwrap().set_content(text);
@@ -609,7 +678,7 @@ fn move_cursor(mut app: &mut Cursive, direction: map::Direction) {
                 };
             }
         }
-        ShowInfo(app, format!("{:?}, {:?}", dx, dy));
+        //ShowInfo(app, format!("{:?}, {:?}", dx, dy));
         let cur_map = get_ref_curmap_wo_unsafe!();
         let hero: &mut hero::THero = get_mut_ref_curhero_wo_unsafe!(hero::CUR_HERO);
 

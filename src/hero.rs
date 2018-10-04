@@ -217,6 +217,15 @@ pub fn GetFreeSlot(H: &THero, Itm: game_item::TGameItem) -> Option<usize> {
     None
 }
 
+pub fn GetFreeItem(H: &THero) -> Option<usize> {
+    for i in 0..MaxHeroItems {
+        if H.Items[i].is_none() {
+            return Some(i);
+        }
+    }
+    None
+}
+
 pub fn GetHeroWeapon(H: &THero) -> Option<usize> {
     match H.Slots[slotHands] {
         None => None,

@@ -19,37 +19,38 @@ pub const STR_LIVE: &str = "You regained your hero's health in the Source!";
 
 pub const STR_HERO_DIED: &str = "Hero dies!";
 
-pub const INIT_DIALOG: &str = "Select `Start` or press <Space> key to start playing.\
-                               \nSelect `Quit` or press <Esc> key to exit.";
-pub const HELP_EXIT_DIALOG: &str = "Select `Help` to get help.\n\
-                                    Select `Quit` to exit.";
+pub const INIT_DIALOG: &str = "Select <Start> or press [Space] key to start playing.\
+                               \nSelect <Quit> or press [Esc] key to exit.";
+pub const HELP_EXIT_DIALOG: &str = "Select <Help> to get help.\n\
+                                    Select <Quit> to exit.";
 
 pub fn help() -> String {
     format!(
-        "`@`: Hero\n\
+        "[@]: Hero\n\
          \n\
          Tiles:\n\
-         `.`: Grass\n\
-         `:`: Ground\n\
-         `+`: Stairs Up\n\
-         `-`: Stairs Down\n\
-         `^`: Tree\n\
-         `X`: Stone\n\
+         [.]: Grass\n\
+         [:]: Ground\n\
+         [+]: Stairs Up\n\
+         [-]: Stairs Down\n\
+         [^]: Tree\n\
+         [X]: Stone\n\
          \n\
          Monsters:\n\
-         `p`: {}\n\
-         `%`: {}\n\
-         `!`: {}\n\
-         `#`: {}\n\
-         `&`: {}\n\
-         `j`: {}\n\
-         `A`: {}\n\
+         [p]: {}\n\
+         [%]: {}\n\
+         [!]: {}\n\
+         [#]: {}\n\
+         [&]: {}\n\
+         [j]: {}\n\
+         [A]: {}\n\
          \n\
-         Shortcuts:\n\
-         `w`, `a`, `s`, `d`: keys for moving of Hero\n\
-         `e`: Hero's slots\n\
-         `i`: Hero's items\n\
-         `Backspace`: to clear an info area on the right pane",
+         Gameplay keyboard shortcuts:\n\
+         [w], [a], [s], [d]: keys for moving of Hero\n\
+         [e]: Hero's slots\n\
+         [i]: Hero's items\n\
+         [Backspace]: to clear an info area on the right pane\n\
+         [Insert]: to take an item (you need stand on a tile with the item)",
         STR_MONSTER1,
         STR_MONSTER2,
         STR_MONSTER3,
@@ -83,11 +84,14 @@ pub const STR_MON_ATTACK: &str = " attacks!";
 
 pub const STR_HERO_ITEMS: &str = "Hero's items";
 pub const STR_EMPTY_ITEM: &str = "<empty>";
-pub const STR_HERO_ITEMINFO: &str = "Press <Enter> to move the item to `Slots`";
+pub const STR_HERO_ITEMINFO: &str = "Press [Enter] or [<key>] to move the item to `Slots`.\n\
+                                     Press [Backspace] to throw the item from `Items`.\n\
+                                     Press [q] to close the dialog.";
 
 pub const STR_HERO_SLOTITEMS: &str = "Used items";
 pub const SlotName: [&str; hero::MaxSlots] = ["Body:    ", "In hand: "];
-pub const STR_HERO_SLOTINFO: &str = "Press [<key>] to move the slot to `Items`";
+pub const STR_HERO_SLOTINFO: &str = "Press [Enter] or [<key>] to move the slot to `Items`.\n\
+                                     Press [q] to close the dialog.";
 
 pub const STR_GAME_OVER: &str = "
 
@@ -100,12 +104,12 @@ pub const STR_GAME_OVER: &str = "
 
 
              #######          #####        ###     ###     ##########
-           ###    ###        ### ###       ####   ####     ###    ###
-         ###                ###   ###      ##### #####     ###
-         ###     #####     ###     ###     ### ### ###     ######
-         ###       ###     ###########     ###  #  ###     ###
-           ###    ###      ###     ###     ###     ###     ###    ###
-             #######       ###     ###     ###     ###     ##########
+           ##      ##        ##   ##       ####   ####     ##      #
+          ##                ##     ##      ## ## ## ##     ##
+          ##      #####    ##       ##     ##  ###  ##     ######
+          ##        ##     ###########     ##   #   ##     ##
+           ##       #      ##       ##     ##       ##     ##      #
+             #######       ###     ###     ##       ##     ##########
  
  
  
@@ -116,10 +120,10 @@ pub const STR_GAME_OVER: &str = "
  
  
  
-            #######        ###     ###     ##########     ########## 
-         ###       ###     ###     ###     ###    ###     ###     ###
-         ###       ###     ###     ###     ###            ###     ###
-         ###       ###     ###     ###     ######         ##########
-         ###       ###      ###   ###      ###            ###   ###
-         ###       ###       ### ###       ###    ###     ###    ###
-            #######           #####        ##########     ###     ###";
+            #######        ##       ##     ##########     ######### 
+          ##       ##      ##       ##     ##      #      ##      ##
+          ##       ##      ##       ##     ##             ##      ##
+          ##       ##      ##       ##     ######         #########
+          ##       ##       #       #      ##             ##    ##
+          ##       ##        #     #       ##      #      ##     ##
+            #######           #####        ##########     ##      ###";

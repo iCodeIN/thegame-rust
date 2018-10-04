@@ -22,13 +22,13 @@ impl Clone for TGameItemType {
 
 #[derive(Debug)]
 pub struct TGameItem<'tgi> {
-    ID: usize,
+    pub ID: usize,
     pub x: usize,
     pub y: usize,
     pub IType: TGameItemType,
     pub Name: &'tgi str,
     pub Ints: [Option<usize>; MaxItemInt],
-    Reals: [Option<f32>; MaxRealInt],
+    pub Reals: [Option<f32>; MaxRealInt],
     pub IsVisible: bool,
 }
 
