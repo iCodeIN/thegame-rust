@@ -80,7 +80,7 @@ pub const STR_MON_KILL: &str = " is dead!";
 pub const STR_MON_STOP: &str = ": attack repulsed!";
 pub const STR_MON_DEF: &str = " strikes, but doesn't penetrate your defense…";
 pub const STR_DEFENCESKILL_OK: &str = "You repulsed a blow!";
-pub const STR_MON_ATTACK: &str = " attacks!";
+pub const STR_MON_ATTACK: &str = " attacks and damages your hero by";
 
 pub const STR_HERO_ITEMS: &str = "Hero's items";
 pub const STR_EMPTY_ITEM: &str = "<empty>";
@@ -103,13 +103,13 @@ pub const STR_GAME_OVER: &str = "
 
 
 
-             #######          #####        ###     ###     ##########
-           ##      ##        ##   ##       ####   ####     ##      #
-          ##                ##     ##      ## ## ## ##     ##
-          ##      #####    ##       ##     ##  ###  ##     ######
-          ##        ##     ###########     ##   #   ##     ##
-           ##       #      ##       ##     ##       ##     ##      #
-             #######       ###     ###     ##       ##     ##########
+            ########          #####        ##       ##     ##########
+           #       ##        #     #       ###     ###     #       #
+          #                 #       #      ## #   # ##     # 
+         ##        ####    #         #     #   # #   #     ######
+          #          #     ###########     #    #    #     # 
+           #        #      #         #     #         #     #       #
+            ########       #         #     #         #     ##########
  
  
  
@@ -120,10 +120,10 @@ pub const STR_GAME_OVER: &str = "
  
  
  
-            #######        ##       ##     ##########     ######### 
-          ##       ##      ##       ##     ##      #      ##      ##
-          ##       ##      ##       ##     ##             ##      ##
-          ##       ##      ##       ##     ######         #########
-          ##       ##       #       #      ##             ##    ##
-          ##       ##        #     #       ##      #      ##     ##
-            #######           #####        ##########     ##      ###";
+            #######        ##       ##     ##########     ######## 
+           #       #       #         #     #       #      #       #
+          #         #      #         #     #              #       #
+          #         #      #         #     #####          #######
+          #         #       #       #      #              #      #
+           #       #         #     #       #       #      #       #
+            #######           #####        ##########     ##       ##";

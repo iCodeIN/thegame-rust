@@ -74,10 +74,10 @@ fn CanAttack(MonsterNum: usize, HeroNum: usize) -> bool {
     }
 }
 
-fn Distance(hero_xy: (usize, usize), monster_xy: (usize, usize)) -> usize {
-    use std::cmp::{max, min};
-    max(hero_xy.0, hero_xy.1) - min(hero_xy.0, hero_xy.1) + max(monster_xy.0, monster_xy.1)
-        - min(monster_xy.0, monster_xy.1)
+pub fn Distance(hero_xy: (usize, usize), monster_xy: (usize, usize)) -> usize {
+    use std::cmp::{min, max};
+    max(hero_xy.0, monster_xy.0) - min(hero_xy.0, monster_xy.0)
+    + max(hero_xy.1, monster_xy.1) - min(hero_xy.1, monster_xy.1)
 }
 
 fn MonsterAttack(app: &mut ::cursive::Cursive, MonsterNum: usize, h: &mut hero::THero) {
@@ -118,11 +118,12 @@ fn MonsterAttack(app: &mut ::cursive::Cursive, MonsterNum: usize, h: &mut hero::
         low_level::ShowInfo(
             app,
             format!(
-                "{}{}",
+                "{}{} {} points!",
                 monster::MONSTERS[MonsterNum].Name,
-                texts::STR_MON_ATTACK
+                texts::STR_MON_ATTACK,
+                dam - def
             ),
         );
     }
-    hero::IncHP(h, dam - def, true);
+    hero::DecHP(app, h, dam - def);
 }

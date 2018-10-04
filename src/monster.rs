@@ -1,6 +1,8 @@
 //! This module describes Monsters.
 
 use cursive;
+use combat;
+use hero;
 use low_level;
 use map;
 use texts;
@@ -162,7 +164,7 @@ pub const MonsterTypes: Monsters = [
 ];
 
 /// The number of monsters depends on the size of the game map.
-pub const MaxMonsters: usize = ((map::LOCAL_MAP_WIDTH + map::LOCAL_MAP_HEIGHT) / 6) * 15; // default is 5
+pub const MaxMonsters: usize = ((map::LOCAL_MAP_WIDTH + map::LOCAL_MAP_HEIGHT) / 6) * 5; // default is `… * 5`
 pub static mut MONSTERS: [TMonster; MaxMonsters] = [TMonster {
     Name: texts::STR_MONSTER1,
     ID: 1_usize,
@@ -214,4 +216,75 @@ pub fn IsMonsterOnTile(x: usize, y: usize) -> Option<usize> {
         };
     }
     None
+}
+
+pub fn CanTrace(m: &TMonster, h: &hero::THero) -> bool {
+    let d = combat::Distance((h.x, h.y), (m.x, m.y));
+    (d <= m.ViewZone) && (d > 1) 
+}
+
+pub fn StepMonster(m: &mut TMonster, dx: i32, dy: i32 ) {
+    if dx > 0 { m.x += dx as usize; } else {
+        let dx = dx.abs() as usize;
+        if m.x >= dx { m.x -= dx; } else { m.x = 0; }
+    }
+    if dy > 0 { m.y += dy as usize; } else {
+        let dy = dy.abs() as usize;
+        if m.y >= dy { m.y -= dy; } else { m.y = 0; }
+    }
+}
+
+pub fn MonsterStep(m: &mut TMonster, h: &hero::THero) {
+    let curmap = get_ref_curmap!();
+    let mut dx;
+    let mut dy;
+    if h.x > m.x {
+        dx = 1;
+    } else if h.x < m.x {
+        dx = -1;
+    } else { dx = 0; }
+
+    if h.y > m.y {
+        dy = 1;
+    } else if h.y < m.y {
+        dy = -1;
+    } else { dy = 0; }
+
+    if dx != 0 {
+        if (!map::FreeTile(&curmap.Cells[m.x + dx as usize][m.y].Tile)) ||
+           (IsMonsterOnTile(m.x + dx as usize, m.y).is_some()) {
+            dx = 0;
+        }
+    }
+
+    if dy != 0 {
+        if (!map::FreeTile(&curmap.Cells[m.x][m.y + dy as usize].Tile)) ||
+           (IsMonsterOnTile(m.x, m.y + dy as usize).is_some()) {
+            dy = 0;
+        }
+    }
+
+    if dx == 0 && dy == 0 { return; }
+
+    if dx == 0 {
+        StepMonster(m, 0, dy)
+    } else if dy == 0 {
+        StepMonster(m, dx, 0)
+    } else if map::random(0, 2) == 0 {
+        StepMonster(m, 0, dy)
+    } else { StepMonster(m, dx, 0); }
+}
+
+pub fn MonstersStep(app: &mut cursive::Cursive) {
+    let curhero = get_ref_curhero!();
+    for i in 0..MaxMonsters {
+        unsafe {
+            let m = &mut MONSTERS[i];
+            if m.HP > 0 && CanTrace(m, curhero) {
+                low_level::ShowInfo(app, format!("{} moves to you!", m.Name));
+                MonsterStep(m, curhero);
+            }
+        }
+    }
+    combat::MonstersAttack(app);
 }

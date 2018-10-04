@@ -431,6 +431,7 @@ fn throw_item(app: &mut Cursive) {
                 Reals: item.Reals,
                 IsVisible: item.IsVisible,
             });
+            ShowInfo(app, format!("You throw the item: {}", item.Name));
         }
         curhero.Items[selected_id.unwrap()] = None;
         app.pop_layer();
@@ -449,6 +450,7 @@ fn take_item(app: &mut Cursive) {
                 if itm.x == _curhero.x && itm.y == _curhero.y {
                     _curhero.Items[index.unwrap()] = *i;
                     ITEMS[n] = None;
+                    ShowInfo(app, format!("You take the item: {}", itm.Name));
                     break;
                 }
             }
@@ -700,7 +702,8 @@ fn move_cursor(mut app: &mut Cursive, direction: map::Direction) {
 
         if mnstr.is_some() {
             combat::HeroAttack(app, hero, mnstr.unwrap());
-            combat::MonstersAttack(app);
+            monster::MonstersStep(app);
+            //combat::MonstersAttack(app);
             return;
         }
         //
@@ -767,6 +770,7 @@ fn move_cursor(mut app: &mut Cursive, direction: map::Direction) {
                 map::ScrollMap(Down);
             }
 
+            monster::MonstersStep(app);
             // Don't change an order of operations!
             hero::SetHeroVisible(hero::CUR_HERO);
             game::ShowGame(&mut app);
