@@ -128,7 +128,7 @@ pub fn MapGeneration(MapLevel: usize) {
                         if n < game_item::MaxItems {
                             unsafe {
                                 let mut item = game_item::ItemTypes
-                                    [4];//[random(0, game_item::MaxItemTypes)];
+                                    [random(0, game_item::MaxItemTypes)];
                                 item.x = x;
                                 item.y = y;
                                 item.IsVisible = false;
