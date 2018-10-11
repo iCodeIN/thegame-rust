@@ -11,9 +11,12 @@ pub fn HeroShot(app: &mut ::cursive::Cursive, direction: map::Direction) {
     let curhero = get_mut_ref_curhero!();
     if let Some(item) = curhero.Slots[hero::slotHands] {
         if item.IType != game_item::TGameItemType::ItemRangedWeapon {
-            low_level::ShowInfo(app, texts::STR_NONE_WEAPONS.to_string());
+            low_level::ShowInfo(app, texts::STR_NONE_RANGED_WEAPONS.to_string());
             return;
         }
+    } else {
+        low_level::ShowInfo(app, texts::STR_NONE_WEAPONS.to_string());
+        return;
     }
     if curhero.Slots[hero::slotHands].unwrap().Ints[game_item::intRangedAmmo] == Some(0) {
         low_level::ShowInfo(app, texts::STR_NONE_AMMO.to_string());
@@ -31,6 +34,10 @@ pub fn HeroShot(app: &mut ::cursive::Cursive, direction: map::Direction) {
     }
 
     let mut n = curhero.Slots[hero::slotHands].unwrap().Ints[game_item::intRangedRange].unwrap();
+    let d = game::RollDice(3, 6);
+    if d <= curhero.Chars[hero::chrDEX] {
+        n += n / 3;
+    }
     let (mut x, mut y) = (curhero.x, curhero.y);
     while n >= 1 {
         match direction {
@@ -52,11 +59,16 @@ pub fn HeroShot(app: &mut ::cursive::Cursive, direction: map::Direction) {
         }
 
         let m = monster::IsMonsterOnTile(x, y);
-        if m.is_some() {low_level::ShowInfo(app, m.unwrap().to_string());
-            let dam = game::RollDice(
+        if m.is_some() {
+            let mut dam = game::RollDice(
                 curhero.Slots[hero::slotHands].unwrap().Ints[game_item::intRangedDices].unwrap(),
                 curhero.Slots[hero::slotHands].unwrap().Ints[game_item::intRangedDiceNum].unwrap());
-low_level::ShowInfo(app, "damage: ".to_string() + &dam.to_string());
+
+            let d = game::RollDice(3, 6);
+            if d <= curhero.Chars[hero::chrSTR] {
+                dam += dam / 3;
+            }
+
             HeroAttackFin(app, curhero, m.unwrap(), dam);
             monster::MonstersStep(app);
             // Don't change an order of operations!
@@ -116,12 +128,6 @@ pub fn HeroAttack(app: &mut ::cursive::Cursive, h: &mut hero::THero, m: usize) {
     if w.is_none() {
         low_level::ShowInfo(app, texts::STR_NONE_WEAPONS.to_string());
         return;
-    }
-    if let Some(item) = h.Slots[hero::slotHands] {
-        if item.IType != game_item::TGameItemType::ItemRangedWeapon {
-            low_level::ShowInfo(app, texts::STR_NONE_WEAPONS.to_string());
-            return;
-        }
     }
     if !hero::SkillTest(app, h, hero::skillHandWeapon) {
         low_level::ShowInfo(app, texts::STR_BAD_ATTACK.to_string());

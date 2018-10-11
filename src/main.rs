@@ -30,7 +30,7 @@ mod monster;
 mod tables;
 mod texts;
 
-const DEBUG: bool = true;
+const DEBUG: bool = false;
 
 fn main() -> Result<(), cursive::theme::Error> {
     let mut app: cursive::Cursive = cursive::Cursive::default();

@@ -12,7 +12,7 @@ pub const CharsName: [&str; MaxChars] = [
     "Strength", "Dexterity", "Constitution", "IQ", "Wisdom", "Charisma",
 ];
 pub const chrSTR: usize = 0; // strength
-const chrDEX: usize = chrSTR + 1; // dexterity
+pub const chrDEX: usize = chrSTR + 1; // dexterity
 const chrCON: usize = chrDEX + 1; // constitution
 const chrIQ: usize = chrCON + 1; // wisdom
 const chrWIS: usize = chrIQ + 1; // IQ
@@ -186,10 +186,7 @@ pub fn SkillTest(app: &mut cursive::Cursive, H: &mut THero, skl: usize) -> bool 
             SuccessSkillTest(app, H, skillTrapSearch)
         }
         skillRangedWeapon => {
-            if map::random(0, 35) == 0 { // default value is 35
-                low_level::ShowInfo(app, texts::STR_RANGEDWEAPONSKILL_OK.to_string());
-                H.Skills[skillRangedWeapon] += 1;
-            }
+            SuccessSkillTest(app, H, skillRangedWeapon)
         }
         _ => unreachable!(),
     };
@@ -215,6 +212,12 @@ fn SuccessSkillTest(app: &mut cursive::Cursive, H: &mut THero, skl: usize) {
             if map::random(0, 100) + 1 <= rnd {
                 low_level::ShowInfo(app, texts::STR_TRAPSKILL_OK.to_owned());
                 H.Skills[skillTrapSearch] += 1;
+            }
+        }
+        skillRangedWeapon => {
+            if map::random(0, 35) == 0 { // default value is 35
+                low_level::ShowInfo(app, texts::STR_RANGEDWEAPONSKILL_OK.to_string());
+                H.Skills[skillRangedWeapon] += 1;
             }
         }
         _ => unreachable!(),

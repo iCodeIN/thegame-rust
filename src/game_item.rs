@@ -188,7 +188,7 @@ pub const ItemTypes: Items = [
         IType: TGameItemType::ItemAmmo,
         Name: texts::STR_AMMO,
         Ints: [
-            Some(5usize),
+            Some(100usize),
             None,
             None,
             None,
@@ -219,7 +219,7 @@ pub const ItemTypes: Items = [
         IType: TGameItemType::ItemRangedWeapon,
         Name: texts::STR_CROSS,
         Ints: [
-            Some(100usize),
+            Some(0usize),
             Some(5),
             Some(1),
             Some(4),

@@ -66,6 +66,8 @@ pub fn help() -> String {
 
 pub const STR_MOVE_ITEM_TO_SLOTS : &str = "You move an item to your slots: ";
 pub const STR_MOVE_SLOT_TO_ITEMS : &str = "You move an item from slots to items: ";
+pub const STR_CANNOT_THROW_ITEM: &str = "There is the busy tile! Cannot throw the item.";
+pub const STR_YOU_THROW_ITEM: &str = "You throw the item";
 pub const STR_AXE: &str = "Axe";
 pub const STR_SWORD: &str = "Sword";
 pub const STR_BODYARMOR: &str = "Bodyarmor";
@@ -78,6 +80,7 @@ pub const STR_BAD_ATTACK: &str = "You missed…";
 pub const STR_BAD_RANGED_ATTACK: &str = "You missed…";
 pub const STR_TRAPSKILL_OK: &str = "Your skill of neutralizing traps is increased.";
 pub const STR_NONE_WEAPONS: &str = "You have no weapons.";
+pub const STR_NONE_RANGED_WEAPONS: &str = "You have no bow.";
 pub const STR_NONE_AMMO: &str = "You have no arrows.";
 pub const STR_BIG_SKIN: &str = "Monster's skin stood your blow…";
 pub const STR_ATTACK: &str = "You do several points damage: ";
@@ -145,4 +148,7 @@ pub const STR_NEXTLEVEL: &str = "Level up!";
 pub const STR_RANGEDWEAPONSKILL_OK: &str = "Archery skill has been improved!";
 
 pub const STR_AMMO: &str = "Arrows";
+pub const STR_N_TAKED_ARROWS: &str = " arrows taked!";
 pub const STR_CROSS: &str = "Bow";
+pub const STR_TAKED_BOW: &str = "A bow taked!";
+pub const STR_TAKED_ITEM: &str = "You take the item";

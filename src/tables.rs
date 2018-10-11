@@ -8,7 +8,7 @@ pub const ExpLevel_Table: [usize; MaxPlayerLevel as usize] =
 pub const HPLevel_Table: [usize; MaxPlayerLevel as usize] = [10, 20, 30, 50, 80, 130, 210, 340];
 
 // percents
-pub const BaseSkill_Table: [usize; hero::MaxSkills as usize] = [40, 20, 25, 35];
+pub const BaseSkill_Table: [usize; hero::MaxSkills as usize] = [30, 20, 25, 35];
 
 pub const Race_Table: [[(usize, usize); hero::chrCHA + 1]; hero::raceHobbit + 1] = [
     [(12, 4), (12, 4), (12, 4), (12, 4), (12, 4), (10, 4)],
@@ -18,7 +18,7 @@ pub const Race_Table: [[(usize, usize); hero::chrCHA + 1]; hero::raceHobbit + 1]
 ];
 
 pub const ClassSkill_Table: [[(usize, usize); hero::skillMax + 1]; hero::classWizard + 1] = [
-    [(80, 15), (50, 20), (25, 10), (20, 20)],
-    [(20, 20), (80, 15), (60, 20), (80, 20)],
-    [(70, 20), (50, 20), (15, 10), (35, 20)],
+    [(80, 15), (20, 20), (70, 20), (20, 20)],
+    [(50, 20), (80, 15), (50, 20), (80, 20)],
+    [(25, 10), (60, 20), (15, 10), (35, 20)],
 ];

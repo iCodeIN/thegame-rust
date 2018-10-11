@@ -237,7 +237,7 @@ pub fn StepMonster(m: &mut TMonster, dx: i32, dy: i32 ) {
     }
 }
 
-pub fn MonsterStep(m: &mut TMonster, h: &hero::THero) {
+pub fn MonsterStep(m: &mut TMonster, h: &hero::THero) -> bool {
     let curmap = get_ref_curmap!();
     let mut dx;
     let mut dy;
@@ -267,7 +267,7 @@ pub fn MonsterStep(m: &mut TMonster, h: &hero::THero) {
         }
     }
 
-    if dx == 0 && dy == 0 { return; }
+    if dx == 0 && dy == 0 { return false; }
 
     if dx == 0 {
         StepMonster(m, 0, dy)
@@ -276,6 +276,7 @@ pub fn MonsterStep(m: &mut TMonster, h: &hero::THero) {
     } else if map::random(0, 2) == 0 {
         StepMonster(m, 0, dy)
     } else { StepMonster(m, dx, 0); }
+    true
 }
 
 pub fn MonstersStep(app: &mut cursive::Cursive) {
@@ -284,8 +285,7 @@ pub fn MonstersStep(app: &mut cursive::Cursive) {
         unsafe {
             let m = &mut MONSTERS[i];
             if m.HP > 0 && CanTrace(m, curhero) {
-                low_level::ShowInfo(app, format!("{} moves to you!", m.Name));
-                MonsterStep(m, curhero);
+                if MonsterStep(m, curhero) { low_level::ShowInfo(app, format!("{} moves to you!", m.Name)); }
             }
         }
     }

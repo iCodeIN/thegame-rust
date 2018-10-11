@@ -426,7 +426,7 @@ fn throw_item(app: &mut Cursive) {
             for i in ITEMS.iter() {
                 if let Some(itm) = i {
                     if itm.x == x && itm.y == y {
-                        ShowInfo(app, "There is the busy tile! Cannot throw the item.".to_owned());
+                        ShowInfo(app, texts::STR_CANNOT_THROW_ITEM.to_owned());
                         return;
                     }
                 }
@@ -442,7 +442,7 @@ fn throw_item(app: &mut Cursive) {
                 Reals: item.Reals,
                 IsVisible: item.IsVisible,
             });
-            ShowInfo(app, format!("You throw the item: {}", item.Name));
+            ShowInfo(app, format!("{}: {}", texts::STR_YOU_THROW_ITEM, item.Name));
         }
         curhero.Items[selected_id.unwrap()] = None;
         app.pop_layer();
@@ -502,7 +502,7 @@ fn take_item(app: &mut Cursive) {
                                 Reals: [None; game_item::MaxRealInt],
                                 IsVisible: false,
                             });
-                            ShowInfo(app, "A bow taked!".to_string());
+                            ShowInfo(app, texts::STR_TAKED_BOW.to_string());
                         }
                         // if the item is ammo
                         game_item::TGameItemType::ItemAmmo => {
@@ -554,7 +554,7 @@ fn take_item(app: &mut Cursive) {
                                             IsVisible: false,
                                         });
                                     }
-                                    ShowInfo(app, itm.Ints[game_item::intAmmo].unwrap().to_string() + " arrows taked!");
+                                    ShowInfo(app, itm.Ints[game_item::intAmmo].unwrap().to_string() + texts::STR_N_TAKED_ARROWS);
                                 }
                             } else if let Some(idx) = { // else if the hero hasn't a bow in his hands, but he has a bow in his `Items`
                                 let mut idx = None;
@@ -611,7 +611,7 @@ fn take_item(app: &mut Cursive) {
                                         IsVisible: false,
                                     });
                                 }
-                                ShowInfo(app, itm.Ints[game_item::intAmmo].unwrap().to_string() + " arrows taked!");
+                                ShowInfo(app, itm.Ints[game_item::intAmmo].unwrap().to_string() + texts::STR_N_TAKED_ARROWS);
                             } else { // else if the hero hasn't any bow in `Items`
                                 let mut flag = false;
                                 for it in 0..hero::MaxHeroItems {
@@ -652,12 +652,12 @@ fn take_item(app: &mut Cursive) {
                                         }
                                 }
                                 if !flag { curhero.Items[index.unwrap()] = *i; }
-                                ShowInfo(app, itm.Ints[game_item::intAmmo].unwrap().to_string() + " arrows taked!");
+                                ShowInfo(app, itm.Ints[game_item::intAmmo].unwrap().to_string() + texts::STR_N_TAKED_ARROWS);
                             }
                         }
                         _ => { // if the item isn't ammo
                             curhero.Items[index.unwrap()] = *i;
-                            ShowInfo(app, format!("You take the item: {}", itm.Name));
+                            ShowInfo(app, format!("{}: {}", texts::STR_TAKED_ITEM, itm.Name));
                         }
                     }
                     ITEMS[n] = None;
@@ -919,7 +919,7 @@ fn move_cursor(mut app: &mut Cursive, direction: map::Direction) {
 
         // If hero died to stop his moving at all.
         if hero.HP <= 0 {
-            GameOverAnimation(app);
+            PostMortem(app);
             return;
         }
 
@@ -937,6 +937,9 @@ fn move_cursor(mut app: &mut Cursive, direction: map::Direction) {
             combat::HeroAttack(app, hero, mnstr.unwrap());
             monster::MonstersStep(app);
             combat::MonstersAttack(app);
+            // Don't change an order of operations!
+            //hero::SetHeroVisible(unsafe { hero::CUR_HERO });
+            //game::ShowGame(app);
             return;
         }
         //
@@ -1041,7 +1044,37 @@ pub fn GenerateHero(app: &mut Cursive) {
                                     .is_checked() { hero::classWizard }
                                 else { panic!("Error in hero creation dialog"); };
                 if curhero.Class == hero::classArcher {
-                    curhero.Items[0] = Some(game_item::ItemTypes[5]);
+                    curhero.Items[0] = Some(game_item::TGameItem {
+                        ID: 5,
+                        x: 0,
+                        y: 0,
+                        IType: game_item::TGameItemType::ItemRangedWeapon,
+                        Name: texts::STR_CROSS,
+                        Ints: [
+                            Some(100usize),
+                            Some(5),
+                            Some(1),
+                            Some(4),
+                            None,
+                            None,
+                            None,
+                            None,
+                            None,
+                            None,
+                            None,
+                            None,
+                            None,
+                            None,
+                            None,
+                            None,
+                            None,
+                            None,
+                            None,
+                            None,
+                        ],
+                        Reals: [None; game_item::MaxRealInt],
+                        IsVisible: false,
+                    });
                 }
                 ShowHeroInfo(a, unsafe { hero::CUR_HERO });
                 a.pop_layer();
@@ -1262,9 +1295,10 @@ pub fn HeroDied(app: &mut Cursive) {
     ShowInfo(app, String::from(texts::STR_HERO_DIED));
 }
 
-fn GameOverAnimation(app: &mut Cursive) {
+fn PostMortem(app: &mut Cursive) {
     disable_current_shortcuts(app);
     app.find_id::<TextView>("area")
         .unwrap()
         .set_content(texts::STR_GAME_OVER);
+    game::ShowGame(app);
 }
