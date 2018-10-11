@@ -20,7 +20,7 @@ shadow     = ["green"]
 view       = ["blue"]
 
 # Array and simple values have the same effect.
-primary   = ["white"]
+primary   = "black" # ["white"]
 secondary = "magenta"
 tertiary  = "magenta"
 

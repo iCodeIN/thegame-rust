@@ -41,7 +41,8 @@ pub fn StartGame(app: &mut cursive::Cursive) {
     app.pop_layer();
     low_level::create_main_screen(app);
     hero::InitHeroes();
-    ShowGame(app);
+    low_level::GenerateHero(app);
+    //ShowGame(app);
 }
 
 pub fn RollDice(d1: usize, d2: usize) -> usize {

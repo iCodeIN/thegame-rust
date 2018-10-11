@@ -2,6 +2,7 @@
 
 use cursive;
 use combat;
+use game;
 use hero;
 use low_level;
 use map;
@@ -220,6 +221,8 @@ pub fn IsMonsterOnTile(x: usize, y: usize) -> Option<usize> {
 
 pub fn CanTrace(m: &TMonster, h: &hero::THero) -> bool {
     let d = combat::Distance((h.x, h.y), (m.x, m.y));
+    let dd = game::RollDice(3, 6);
+    if dd <= h.Chars[hero::chrCHA] { return false; }
     (d <= m.ViewZone) && (d > 1) 
 }
 

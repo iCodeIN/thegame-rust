@@ -2,6 +2,9 @@
 
 use hero;
 
+pub const STR_HERO_RACE: &str = "Race: ";
+pub const STR_HERO_CLASS: &str = "Class: ";
+pub const STR_HERO_LEVEL: &str = "Level: ";
 pub const STR_HERO_EXP: &str = "Experience: ";
 pub const STR_HERO_HP: &str = "Health/Max Health: ";
 pub const STR_HERO_XY: &str = "Coordinates: ";
@@ -72,8 +75,10 @@ pub const STR_TRAPOK: &str = "You have neutralized a trap!";
 pub const STR_ADD_EXP: &str = "You increased your experience by ";
 pub const STR_HANDWEAPONSKILL_OK: &str = "Now melee skills are increased.";
 pub const STR_BAD_ATTACK: &str = "You missed…";
+pub const STR_BAD_RANGED_ATTACK: &str = "You missed…";
 pub const STR_TRAPSKILL_OK: &str = "Your skill of neutralizing traps is increased.";
 pub const STR_NONE_WEAPONS: &str = "You have no weapons.";
+pub const STR_NONE_AMMO: &str = "You have no arrows.";
 pub const STR_BIG_SKIN: &str = "Monster's skin stood your blow…";
 pub const STR_ATTACK: &str = "You do several points damage: ";
 pub const STR_MON_KILL: &str = " is dead!";
@@ -127,3 +132,17 @@ pub const STR_GAME_OVER: &str = "
           #         #       #       #      #              #      #
            #       #         #     #       #       #      #       #
             #######           #####        ##########     ##       ##";
+
+pub const MaxRace: usize = 4;
+pub const RaceName: [&str; MaxRace] = [
+    "Human", "Elf", "Dwarf", "Hobbit"];
+
+pub const MaxClass: usize = 3;
+pub const ClassName: [&str; MaxClass] = [
+    "Warrior", "Archer", "Wizard"];
+
+pub const STR_NEXTLEVEL: &str = "Level up!";
+pub const STR_RANGEDWEAPONSKILL_OK: &str = "Archery skill has been improved!";
+
+pub const STR_AMMO: &str = "Arrows";
+pub const STR_CROSS: &str = "Bow";

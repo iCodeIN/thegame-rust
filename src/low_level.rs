@@ -14,15 +14,18 @@ pub use cursive::Cursive;
 use cursive::event::Key;
 //use cursive::menu::MenuTree;
 use cursive::traits::*;
-use cursive::views::{Dialog, LinearLayout, SelectView, ScrollView, TextView};
+use cursive::views::{DummyView, Dialog, LinearLayout, SelectView, ScrollView, TextView, Checkbox};
 
 //use decorators::decorators;
 use loggers::{log, logger};
 
-const CHARACTERS: [char; 43] = [
-    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i',
-    'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', ' ', 'ф',
-    'ы', 'в', 'а', 'у', 'ш',
+const CHARACTERS: [char; 48] = [
+    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+    'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i',
+    'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r',
+    's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
+    'W', 'A', 'S', 'D',
+    ' ', 'й', 'ф', 'ы', 'в', 'а', 'у', 'ш',
 ];
 #[derive(Debug)]
 pub enum Color {
@@ -109,13 +112,21 @@ pub const MonsterRecords: [TTileRecord; monster::MaxMonsterTypes as usize] = [
     },
 ];
 
-pub const ItemRecords: [TTileRecord; 3] = [
+pub const ItemRecords: [TTileRecord; 5] = [
     TTileRecord {
         C: '>',
         Clr: Color::LightCyan,
     },
     TTileRecord {
         C: '[',
+        Clr: Color::LightGreen,
+    },
+    TTileRecord {
+        C: '|',
+        Clr: Color::LightCyan,
+    },
+    TTileRecord {
+        C: '{',
         Clr: Color::LightGreen,
     },
     TTileRecord {
@@ -150,10 +161,10 @@ fn enable_main_shortcuts(app: &mut Cursive) {
     });
     app.add_global_callback(Key::Esc, |_| {});
     app.add_global_callback(Key::Ins, take_item);
-    //app.add_global_callback(Key::Up, |a| move_cursor(a, Up));
-    //app.add_global_callback(Key::Down, |a| move_cursor(a, Down));
-    //app.add_global_callback(Key::Left, |a| move_cursor(a, Left));
-    //app.add_global_callback(Key::Right, |a| move_cursor(a, Right));
+    app.add_global_callback('W', |a| combat::HeroShot(a, Up));
+    app.add_global_callback('S', |a| combat::HeroShot(a, Down));
+    app.add_global_callback('A', |a| combat::HeroShot(a, Left));
+    app.add_global_callback('D', |a| combat::HeroShot(a, Right));
     app.add_global_callback('e', |a| ShowHeroSlots(a));
     app.add_global_callback('i', |a| ShowHeroItems(a));
     app.add_global_callback('w', |a| move_cursor(a, Up));
@@ -300,8 +311,8 @@ fn create_slots_screen(app: &mut Cursive) {
             panic!("Too many slots: {:?}!", i);
         }
         list.add_item(format!("[{}] {}", character, match hero.Slots[i] {
-            None => texts::STR_EMPTY_ITEM,
-            Some(item) => item.Name,
+            None => texts::STR_EMPTY_ITEM.to_string(),
+            Some(item) => game_item::GetItemName(item),
         }), i);
         app.add_global_callback(character, move |a| {
             move_slot_to_items(a, i);
@@ -342,8 +353,8 @@ fn create_items_screen(app: &mut Cursive) {
             panic!("Too many items: {:?}!", i);
         }
         list.add_item(format!("[{}] {}", character, match hero.Items[i] {
-            None => texts::STR_EMPTY_ITEM,
-            Some(item) => item.Name,
+            None => texts::STR_EMPTY_ITEM.to_string(),
+            Some(item) => game_item::GetItemName(item),
         }), i);
         app.add_global_callback(character, move |a| {
             move_item_to_slots(a, i);
@@ -362,7 +373,7 @@ fn create_items_screen(app: &mut Cursive) {
             .child(TextView::new("\n"))
             .child(list.with_id("items_list"))
             .child(TextView::new(format!("\n{}", texts::STR_HERO_ITEMINFO))))
-        .with_id("d")
+        //.with_id("d")
     );
     app.add_global_callback('q', |a| {
         a.pop_layer();
@@ -441,16 +452,215 @@ fn throw_item(app: &mut Cursive) {
 
 fn take_item(app: &mut Cursive) {
     use game_item::ITEMS;
-    let mut _curhero = get_mut_ref_curhero!();
-    let index = hero::GetFreeItem(_curhero);
+    let curhero = get_mut_ref_curhero!();
+    let index = hero::GetFreeItem(curhero);
     if index.is_none() { return; }
     unsafe {
         for (n, i) in ITEMS.iter().enumerate() {
-            if let Some(itm) = i {
-                if itm.x == _curhero.x && itm.y == _curhero.y {
-                    _curhero.Items[index.unwrap()] = *i;
+            if let Some(mut itm) = i {
+                if itm.x == curhero.x && itm.y == curhero.y {
+                    match itm.IType {
+                        // if the item is bow
+                        game_item::TGameItemType::ItemRangedWeapon => {
+                            let mut items = Vec::new();
+                            for i in 0..hero::MaxHeroItems {
+                                if curhero.Items[i].is_some() && curhero.Items[i].unwrap().IType == game_item::TGameItemType::ItemAmmo {
+                                        items.push(curhero.Items[i].unwrap());
+                                        curhero.Items[i] = None;
+                                    }
+                            }
+                            let n = itm.Ints[game_item::intAmmo].unwrap() + items.iter().map(|ref i| i.Ints[game_item::intAmmo].unwrap()).sum::<usize>();
+                            let index = hero::GetFreeItem(curhero).unwrap();
+                            curhero.Items[index] = Some(game_item::TGameItem {
+                                ID: 5,
+                                x: 0,
+                                y: 0,
+                                IType: game_item::TGameItemType::ItemRangedWeapon,
+                                Name: texts::STR_CROSS,
+                                Ints: [
+                                    Some(n),
+                                    Some(5),
+                                    Some(1),
+                                    Some(4),
+                                    None,
+                                    None,
+                                    None,
+                                    None,
+                                    None,
+                                    None,
+                                    None,
+                                    None,
+                                    None,
+                                    None,
+                                    None,
+                                    None,
+                                    None,
+                                    None,
+                                    None,
+                                    None,
+                                ],
+                                Reals: [None; game_item::MaxRealInt],
+                                IsVisible: false,
+                            });
+                            ShowInfo(app, "A bow taked!".to_string());
+                        }
+                        // if the item is ammo
+                        game_item::TGameItemType::ItemAmmo => {
+                            // if the hero has a bow in his hands
+                            if let Some(mut hero_item) = curhero.Slots[hero::slotHands] {
+                                // if this weapon is a bow
+                                if hero_item.IType == game_item::TGameItemType::ItemRangedWeapon {
+                                    if let Some(n) = hero_item.Ints[game_item::intRangedAmmo] { // if the bow has an arrows
+                                        curhero.Slots[hero::slotHands] = Some(game_item::TGameItem {
+                                            ID: 5,
+                                            x: 0,
+                                            y: 0,
+                                            IType: game_item::TGameItemType::ItemRangedWeapon,
+                                            Name: texts::STR_CROSS,
+                                            Ints: [
+                                                Some(n + itm.Ints[game_item::intAmmo].unwrap()),
+                                                Some(5),
+                                                Some(1),
+                                                Some(4),
+                                                None,
+                                                None,
+                                                None,
+                                                None,
+                                                None,
+                                                None,
+                                                None,
+                                                None,
+                                                None,
+                                                None,
+                                                None,
+                                                None,
+                                                None,
+                                                None,
+                                                None,
+                                                None,
+                                            ],
+                                            Reals: [None; game_item::MaxRealInt],
+                                            IsVisible: false,
+                                        });
+                                    } else { // if the bow hasn't any arrows
+                                        curhero.Slots[hero::slotHands] = Some(game_item::TGameItem {
+                                            ID: 5,
+                                            x: 0,
+                                            y: 0,
+                                            IType: game_item::TGameItemType::ItemRangedWeapon,
+                                            Name: texts::STR_CROSS,
+                                            Ints: itm.Ints,
+                                            Reals: [None; game_item::MaxRealInt],
+                                            IsVisible: false,
+                                        });
+                                    }
+                                    ShowInfo(app, itm.Ints[game_item::intAmmo].unwrap().to_string() + " arrows taked!");
+                                }
+                            } else if let Some(idx) = { // else if the hero hasn't a bow in his hands, but he has a bow in his `Items`
+                                let mut idx = None;
+                                for i in 0..hero::MaxHeroItems {
+                                    if curhero.Items[i].is_some() && curhero.Items[i].unwrap().IType == game_item::TGameItemType::ItemRangedWeapon {
+                                            idx = Some(i);
+                                            break;
+                                        }
+                                }
+                                idx
+                            } {
+                                // if the bow has an arrows
+                                if let Some(n) = curhero.Items[idx].unwrap().Ints[game_item::intRangedAmmo] {
+                                    curhero.Items[idx] = Some(game_item::TGameItem {
+                                        ID: 5,
+                                        x: 0,
+                                        y: 0,
+                                        IType: game_item::TGameItemType::ItemRangedWeapon,
+                                        Name: texts::STR_CROSS,
+                                        Ints: [
+                                            Some(n + itm.Ints[game_item::intAmmo].unwrap()),
+                                            Some(5),
+                                            Some(1),
+                                            Some(4),
+                                            None,
+                                            None,
+                                            None,
+                                            None,
+                                            None,
+                                            None,
+                                            None,
+                                            None,
+                                            None,
+                                            None,
+                                            None,
+                                            None,
+                                            None,
+                                            None,
+                                            None,
+                                            None,
+                                        ],
+                                        Reals: [None; game_item::MaxRealInt],
+                                        IsVisible: false,
+                                    });
+                                } else { // else if the bow hasn't any arrows
+                                    curhero.Items[idx] = Some(game_item::TGameItem {
+                                        ID: 5,
+                                        x: 0,
+                                        y: 0,
+                                        IType: game_item::TGameItemType::ItemRangedWeapon,
+                                        Name: texts::STR_CROSS,
+                                        Ints: itm.Ints,
+                                        Reals: [None; game_item::MaxRealInt],
+                                        IsVisible: false,
+                                    });
+                                }
+                                ShowInfo(app, itm.Ints[game_item::intAmmo].unwrap().to_string() + " arrows taked!");
+                            } else { // else if the hero hasn't any bow in `Items`
+                                let mut flag = false;
+                                for it in 0..hero::MaxHeroItems {
+                                    if curhero.Items[it].is_some() && curhero.Items[it].unwrap().IType == game_item::TGameItemType::ItemAmmo {
+                                            curhero.Items[it] = Some(game_item::TGameItem {
+                                                ID: 4,
+                                                x: 0,
+                                                y: 0,
+                                                IType: game_item::TGameItemType::ItemAmmo,
+                                                Name: texts::STR_AMMO,
+                                                Ints: [
+                                                    Some(curhero.Items[it].unwrap().Ints[game_item::intAmmo].unwrap() + i.unwrap().Ints[game_item::intAmmo].unwrap()),
+                                                    None,
+                                                    None,
+                                                    None,
+                                                    None,
+                                                    None,
+                                                    None,
+                                                    None,
+                                                    None,
+                                                    None,
+                                                    None,
+                                                    None,
+                                                    None,
+                                                    None,
+                                                    None,
+                                                    None,
+                                                    None,
+                                                    None,
+                                                    None,
+                                                    None,
+                                                ],
+                                                Reals: [None; game_item::MaxRealInt],
+                                                IsVisible: false,
+                                            });
+                                            flag = true;
+                                            break;
+                                        }
+                                }
+                                if !flag { curhero.Items[index.unwrap()] = *i; }
+                                ShowInfo(app, itm.Ints[game_item::intAmmo].unwrap().to_string() + " arrows taked!");
+                            }
+                        }
+                        _ => { // if the item isn't ammo
+                            curhero.Items[index.unwrap()] = *i;
+                            ShowInfo(app, format!("You take the item: {}", itm.Name));
+                        }
+                    }
                     ITEMS[n] = None;
-                    ShowInfo(app, format!("You take the item: {}", itm.Name));
                     break;
                 }
             }
@@ -495,6 +705,8 @@ pub fn ShowItem(app: &mut Cursive, itm: &game_item::TGameItem) {
         ItemRecords[match itm.IType {
                         ItemHandWeapon => 0,
                         ItemArmor => 1,
+                        ItemAmmo => 2,
+                        ItemRangedWeapon => 3,
                     } as usize]
             .C,
     );
@@ -521,8 +733,27 @@ pub fn ShowHero(app: &mut Cursive, HeroNum: usize) {
 
 pub fn ShowHeroInfo(app: &mut Cursive, HeroNum: usize) {
     let hero: &hero::THero = get_ref_curhero!(HeroNum);
-    app.find_id::<TextView>("hero_info").unwrap().set_content(
-        texts::STR_HERO_EXP.to_owned()
+    let info = texts::STR_HERO_RACE.to_owned()
+            + match hero.Race {
+                hero::raceHuman => "Human",
+                hero::raceElf => "Elf",
+                hero::raceDwarf => "Dwarf",
+                hero::raceHobbit => "Hobbit",
+                _ => panic!("Error in `ShowHeroInfo`"),
+            }
+            + "\n"
+            + &texts::STR_HERO_CLASS.to_owned()
+            + match hero.Class {
+                hero::classWarrior => "Warrior",
+                hero::classArcher => "Archer",
+                hero::classWizard => "Wizard",
+                _ => panic!("Error in `ShowHeroInfo`"),
+            }
+            + "\n"
+            + &texts::STR_HERO_LEVEL.to_owned()
+            + &hero.Level.to_string()
+            + "\n"
+            + &texts::STR_HERO_EXP.to_owned()
             + &hero.Exp.to_string()
             + "\n"
             + &texts::STR_HERO_HP.to_owned()
@@ -533,7 +764,9 @@ pub fn ShowHeroInfo(app: &mut Cursive, HeroNum: usize) {
             + &texts::STR_HERO_XY.to_owned()
             + &hero.x.to_string()
             + ", "
-            + &hero.y.to_string(),
+            + &hero.y.to_string();
+    app.find_id::<TextView>("hero_info").unwrap().set_content(
+        info
     );
 }
 
@@ -703,7 +936,7 @@ fn move_cursor(mut app: &mut Cursive, direction: map::Direction) {
         if mnstr.is_some() {
             combat::HeroAttack(app, hero, mnstr.unwrap());
             monster::MonstersStep(app);
-            //combat::MonstersAttack(app);
+            combat::MonstersAttack(app);
             return;
         }
         //
@@ -731,7 +964,7 @@ fn move_cursor(mut app: &mut Cursive, direction: map::Direction) {
                 if &cur_cell.Tile == trap {
                     cur_cell.Tile = map::tileGrass;
                     if !hero::SkillTest(app, hero, hero::skillTrapSearch) {
-                        let dam = map::random(0, hero.MaxHP as usize) + 1; //f32::round(hero.MaxHP * 1.1)) + 1;
+                        let dam = map::random(1, hero.MaxHP as usize); //f32::round(hero.MaxHP * 1.1)) + 1;
                         ShowInfo(
                             app,
                             String::from(texts::STR_TRAP) + "(-" + &dam.to_string() + " points)",
@@ -776,6 +1009,253 @@ fn move_cursor(mut app: &mut Cursive, direction: map::Direction) {
             game::ShowGame(&mut app);
         };
     }
+}
+
+pub fn GenerateHero(app: &mut Cursive) {
+    app.add_layer(
+        Dialog::new()
+            .title("Select a hero")
+            .button("Create", |a| {
+                let curhero = get_mut_ref_curhero!();
+                curhero.Race = if a.find_id::<Checkbox>("race0")
+                                    .unwrap()
+                                    .is_checked() { hero::raceHuman }
+                                else if a.find_id::<Checkbox>("race1")
+                                    .unwrap()
+                                    .is_checked() { hero::raceElf }
+                                else if a.find_id::<Checkbox>("race2")
+                                    .unwrap()
+                                    .is_checked() { hero::raceDwarf }
+                                else if a.find_id::<Checkbox>("race3")
+                                    .unwrap()
+                                    .is_checked() { hero::raceHobbit }
+                                else { panic!("Error in hero creation dialog"); };
+                curhero.Class = if a.find_id::<Checkbox>("class0")
+                                    .unwrap()
+                                    .is_checked() { hero::classWarrior }
+                                else if a.find_id::<Checkbox>("class1")
+                                    .unwrap()
+                                    .is_checked() { hero::classArcher }
+                                else if a.find_id::<Checkbox>("class2")
+                                    .unwrap()
+                                    .is_checked() { hero::classWizard }
+                                else { panic!("Error in hero creation dialog"); };
+                if curhero.Class == hero::classArcher {
+                    curhero.Items[0] = Some(game_item::ItemTypes[5]);
+                }
+                ShowHeroInfo(a, unsafe { hero::CUR_HERO });
+                a.pop_layer();
+                game::ShowGame(a);
+                enable_main_shortcuts(a);
+            })
+            .content(LinearLayout::vertical()
+                .child(DummyView.fixed_size((45, 1)))
+                .child(LinearLayout::horizontal()
+                    .child(Dialog::new()
+                        .title("Select a race")
+                        .content(LinearLayout::vertical()
+                            .child(DummyView.fixed_size((10, 1)))
+                            .child(LinearLayout::horizontal()
+                                .child(TextView::new(texts::RaceName[0]))
+                                .child(Checkbox::new()
+                                    .on_change(|a, flag| {
+                                        if flag {
+                                            a.find_id::<Checkbox>("race1")
+                                                .unwrap()
+                                                .uncheck();
+                                            a.find_id::<Checkbox>("race2")
+                                                .unwrap()
+                                                .uncheck();
+                                            a.find_id::<Checkbox>("race3")
+                                                .unwrap()
+                                                .uncheck();
+                                        } else if !a.find_id::<Checkbox>("race1")
+                                            .unwrap()
+                                            .is_checked()
+                                            && !a.find_id::<Checkbox>("race2")
+                                                .unwrap()
+                                                .is_checked()
+                                            && !a.find_id::<Checkbox>("race3")
+                                                .unwrap()
+                                                .is_checked() {
+                                                    a.find_id::<Checkbox>("race0")
+                                                        .unwrap()
+                                                        .check();
+                                                } 
+                                    })
+                                    .with_id("race0")
+                                    .fixed_size((10, 1))))
+                            .child(LinearLayout::horizontal()
+                                .child(TextView::new(texts::RaceName[1]))
+                                .child(Checkbox::new()
+                                    .on_change(|a, flag| {
+                                        if flag {
+                                            a.find_id::<Checkbox>("race0")
+                                                .unwrap()
+                                                .uncheck();
+                                            a.find_id::<Checkbox>("race2")
+                                                .unwrap()
+                                                .uncheck();
+                                            a.find_id::<Checkbox>("race3")
+                                                .unwrap()
+                                                .uncheck();
+                                        } else if !a.find_id::<Checkbox>("race0")
+                                            .unwrap()
+                                            .is_checked()
+                                            && !a.find_id::<Checkbox>("race2")
+                                                .unwrap()
+                                                .is_checked()
+                                            && !a.find_id::<Checkbox>("race3")
+                                                .unwrap()
+                                                .is_checked() {
+                                                    a.find_id::<Checkbox>("race1")
+                                                        .unwrap()
+                                                        .check();
+                                                }
+                                    })
+                                    .with_id("race1")
+                                    .fixed_size((10, 1))))
+                            .child(LinearLayout::horizontal()
+                                .child(TextView::new(texts::RaceName[2]))
+                                .child(Checkbox::new()
+                                    .on_change(|a, flag| {
+                                        if flag {
+                                            a.find_id::<Checkbox>("race0")
+                                                .unwrap()
+                                                .uncheck();
+                                            a.find_id::<Checkbox>("race1")
+                                                .unwrap()
+                                                .uncheck();
+                                            a.find_id::<Checkbox>("race3")
+                                                .unwrap()
+                                                .uncheck();
+                                        } else if !a.find_id::<Checkbox>("race0")
+                                            .unwrap()
+                                            .is_checked()
+                                            && !a.find_id::<Checkbox>("race1")
+                                                .unwrap()
+                                                .is_checked()
+                                            && !a.find_id::<Checkbox>("race3")
+                                                .unwrap()
+                                                .is_checked() {
+                                                    a.find_id::<Checkbox>("race2")
+                                                        .unwrap()
+                                                        .check();
+                                                }
+                                    })
+                                    .with_id("race2")
+                                    .fixed_size((10, 1))))
+                            .child(LinearLayout::horizontal()
+                                .child(TextView::new(texts::RaceName[3]))
+                                .child(Checkbox::new()
+                                    .on_change(|a, flag| {
+                                        if flag {
+                                            a.find_id::<Checkbox>("race0")
+                                                .unwrap()
+                                                .uncheck();
+                                            a.find_id::<Checkbox>("race1")
+                                                .unwrap()
+                                                .uncheck();
+                                            a.find_id::<Checkbox>("race2")
+                                                .unwrap()
+                                                .uncheck();
+                                        } else if !a.find_id::<Checkbox>("race0")
+                                            .unwrap()
+                                            .is_checked()
+                                            && !a.find_id::<Checkbox>("race1")
+                                                .unwrap()
+                                                .is_checked()
+                                            && !a.find_id::<Checkbox>("race2")
+                                                .unwrap()
+                                                .is_checked() {
+                                                    a.find_id::<Checkbox>("race3")
+                                                        .unwrap()
+                                                        .check();
+                                                }
+                                    })
+                                    .with_id("race3")
+                                    .fixed_size((10, 1))))))
+                    .child(DummyView.fixed_size((1, 10)))
+                    .child(Dialog::new()
+                        .title("Select a class")
+                        .content(LinearLayout::vertical()
+                            .child(DummyView.fixed_size((10, 1)))
+                            .child(LinearLayout::horizontal()
+                                .child(TextView::new(texts::ClassName[0]))
+                                .child(Checkbox::new()
+                                    .on_change(|a, flag| {
+                                        if flag {
+                                            a.find_id::<Checkbox>("class1")
+                                                .unwrap()
+                                                .uncheck();
+                                            a.find_id::<Checkbox>("class2")
+                                                .unwrap()
+                                                .uncheck();
+                                        } else if !a.find_id::<Checkbox>("class1")
+                                            .unwrap()
+                                            .is_checked()
+                                            && !a.find_id::<Checkbox>("class2")
+                                                .unwrap()
+                                                .is_checked() {
+                                                    a.find_id::<Checkbox>("class0")
+                                                        .unwrap()
+                                                        .check();
+                                                }
+                                    })
+                                    .with_id("class0")
+                                    .fixed_size((12, 1))))
+                            .child(LinearLayout::horizontal()
+                                .child(TextView::new(texts::ClassName[1]))
+                                .child(Checkbox::new()
+                                    .on_change(|a, flag| {
+                                        if flag {
+                                            a.find_id::<Checkbox>("class0")
+                                                .unwrap()
+                                                .uncheck();
+                                            a.find_id::<Checkbox>("class2")
+                                                .unwrap()
+                                                .uncheck();
+                                        } else if !a.find_id::<Checkbox>("class0")
+                                            .unwrap()
+                                            .is_checked()
+                                            && !a.find_id::<Checkbox>("class2")
+                                                .unwrap()
+                                                .is_checked() {
+                                                    a.find_id::<Checkbox>("class1")
+                                                        .unwrap()
+                                                        .check();
+                                                }
+                                    })
+                                    .with_id("class1")
+                                    .fixed_size((12, 1))))
+                            .child(LinearLayout::horizontal()
+                                .child(TextView::new(texts::ClassName[2]))
+                                .child(Checkbox::new()
+                                    .on_change(|a, flag| {
+                                        if flag {
+                                            a.find_id::<Checkbox>("class0")
+                                                .unwrap()
+                                                .uncheck();
+                                            a.find_id::<Checkbox>("class1")
+                                                .unwrap()
+                                                .uncheck();
+                                        } else if !a.find_id::<Checkbox>("class0")
+                                            .unwrap()
+                                            .is_checked()
+                                            && !a.find_id::<Checkbox>("class1")
+                                                .unwrap()
+                                                .is_checked() {
+                                                    a.find_id::<Checkbox>("class2")
+                                                        .unwrap()
+                                                        .check();
+                                                }
+                                    })
+                                    .with_id("class2")
+                                    .fixed_size((12, 1)))))))
+                .fixed_size((46, 10))));
+    app.find_id::<Checkbox>("race0").unwrap().check();
+    app.find_id::<Checkbox>("class0").unwrap().check();
+    disable_current_shortcuts(app);
 }
 
 pub fn HeroDied(app: &mut Cursive) {

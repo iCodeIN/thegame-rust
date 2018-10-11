@@ -6,17 +6,82 @@ use map;
 use monster;
 use texts;
 
-pub fn HeroAttack(app: &mut ::cursive::Cursive, h: &mut hero::THero, m: usize) {
-    let w = hero::GetHeroWeapon(h);
-    if w.is_none() {
-        low_level::ShowInfo(app, texts::STR_NONE_WEAPONS.to_string());
+pub fn HeroShot(app: &mut ::cursive::Cursive, direction: map::Direction) {
+    use map::Direction::*;
+    let curhero = get_mut_ref_curhero!();
+    if let Some(item) = curhero.Slots[hero::slotHands] {
+        if item.IType != game_item::TGameItemType::ItemRangedWeapon {
+            low_level::ShowInfo(app, texts::STR_NONE_WEAPONS.to_string());
+            return;
+        }
+    }
+    if curhero.Slots[hero::slotHands].unwrap().Ints[game_item::intRangedAmmo] == Some(0) {
+        low_level::ShowInfo(app, texts::STR_NONE_AMMO.to_string());
         return;
     }
-    if !hero::SkillTest(app, h, hero::skillHandWeapon) {
-        low_level::ShowInfo(app, texts::STR_BAD_ATTACK.to_string());
+
+    let mut old_item = curhero.Slots[hero::slotHands].unwrap();
+    let n = old_item.Ints[game_item::intRangedAmmo];
+    old_item.Ints[game_item::intRangedAmmo] = Some(n.unwrap() - 1);
+    curhero.Slots[hero::slotHands] = if n.unwrap() > 0 { Some(old_item) } else { None };
+
+    if !hero::SkillTest(app, curhero, hero::skillRangedWeapon) {
+        low_level::ShowInfo(app, texts::STR_BAD_RANGED_ATTACK.to_string());
         return;
     }
-    let dam = WeaponDamage(h.Slots[w.unwrap()].unwrap());
+
+    let mut n = curhero.Slots[hero::slotHands].unwrap().Ints[game_item::intRangedRange].unwrap();
+    let (mut x, mut y) = (curhero.x, curhero.y);
+    while n >= 1 {
+        match direction {
+            Up => {
+                y += 1;
+            }
+            Down => {
+                y -= 1;
+            }
+            Left => {
+                x -= 1;
+            }
+            Right => {
+                x += 1;
+            }
+        }
+        if !map::FreeTile(&get_ref_curmap!().Cells[x][y].Tile) {
+            return;
+        }
+
+        let m = monster::IsMonsterOnTile(x, y);
+        if m.is_some() {low_level::ShowInfo(app, m.unwrap().to_string());
+            let dam = game::RollDice(
+                curhero.Slots[hero::slotHands].unwrap().Ints[game_item::intRangedDices].unwrap(),
+                curhero.Slots[hero::slotHands].unwrap().Ints[game_item::intRangedDiceNum].unwrap());
+low_level::ShowInfo(app, "damage: ".to_string() + &dam.to_string());
+            HeroAttackFin(app, curhero, m.unwrap(), dam);
+            monster::MonstersStep(app);
+            // Don't change an order of operations!
+            hero::SetHeroVisible(unsafe { hero::CUR_HERO });
+            game::ShowGame(app);
+            return;
+        }
+        n -= 1;
+    }
+}
+
+fn HeroAttackFin(app: &mut ::cursive::Cursive, h: &mut hero::THero, m: usize, dam: usize) {
+//    let mut mnstr = unsafe { monster::MONSTERS[m] };
+//    let skin = game::RollDice(mnstr.Dd1, mnstr.Dd2);
+//    if skin >= dam {
+//        low_level::ShowInfo(app, texts::STR_BIG_SKIN.to_string());
+//        return;
+//    }
+//    mnstr.HP -= dam - skin;
+//    low_level::ShowInfo(app, texts::STR_ATTACK.to_string() + &(dam-skin).to_string());
+//
+//    if mnstr.HP <= 0 {
+//        low_level::ShowInfo(app, mnstr.Name.to_string() + texts::STR_MON_KILL);
+//        hero::IncXP(app, h, mnstr.XP);
+//    }
     let skin = unsafe { game::RollDice(monster::MONSTERS[m].Dd1, monster::MONSTERS[m].Dd2) };
     if skin > dam {
         low_level::ShowInfo(app, texts::STR_BIG_SKIN.to_string());
@@ -38,9 +103,38 @@ pub fn HeroAttack(app: &mut ::cursive::Cursive, h: &mut hero::THero, m: usize) {
                 app,
                 format!("{}{}", monster::MONSTERS[m].Name, texts::STR_MON_KILL),
             );
+            // Don't change an order of operations!
+            hero::SetHeroVisible(hero::CUR_HERO);
+            game::ShowGame(app);
         }
         hero::IncXP(app, h, monster::MONSTERS[m].XP);
     }
+}
+
+pub fn HeroAttack(app: &mut ::cursive::Cursive, h: &mut hero::THero, m: usize) {
+    let w = hero::GetHeroWeapon(h);
+    if w.is_none() {
+        low_level::ShowInfo(app, texts::STR_NONE_WEAPONS.to_string());
+        return;
+    }
+    if let Some(item) = h.Slots[hero::slotHands] {
+        if item.IType != game_item::TGameItemType::ItemRangedWeapon {
+            low_level::ShowInfo(app, texts::STR_NONE_WEAPONS.to_string());
+            return;
+        }
+    }
+    if !hero::SkillTest(app, h, hero::skillHandWeapon) {
+        low_level::ShowInfo(app, texts::STR_BAD_ATTACK.to_string());
+        return;
+    }
+    let mut dam = WeaponDamage(h.Slots[w.unwrap()].unwrap());
+
+    let d = game::RollDice(3, 6);
+    if d <= h.Chars[hero::chrSTR] {
+        dam += dam / 2; // If the hero is strong, then the damage from his impact will be increased by one and a half times.
+    }
+
+    HeroAttackFin(app, h, m, dam); 
 }
 
 fn WeaponDamage(itm: game_item::TGameItem) -> usize {
@@ -60,6 +154,7 @@ pub fn MonstersAttack(app: &mut ::cursive::Cursive) {
             MonsterAttack(app, i, curhero);
         }
     }
+    low_level::ShowHeroInfo(app, unsafe { hero::CUR_HERO });
 }
 
 fn CanAttack(MonsterNum: usize, HeroNum: usize) -> bool {

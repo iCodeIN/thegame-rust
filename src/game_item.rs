@@ -4,12 +4,14 @@ use loggers::log;
 use texts;
 
 const MaxItemInt: usize = 20;
-const MaxRealInt: usize = 20;
+pub const MaxRealInt: usize = 20;
 
 #[derive(Debug, PartialEq)]
 pub enum TGameItemType {
     ItemHandWeapon,
     ItemArmor,
+    ItemAmmo,
+    ItemRangedWeapon,
 }
 
 impl Copy for TGameItemType {}
@@ -43,9 +45,14 @@ impl<'tgi> Clone for TGameItem<'tgi> {
 pub const intAttack_d1: usize = 0;
 pub const intAttack_d2: usize = 1;
 pub const intAttackHit: usize = 2;
-pub const intArmorDefence: usize = 0;
+pub const intArmorDefence: usize = 3;
+pub const intAmmo: usize = 0;
+pub const intRangedAmmo: usize = 0;
+pub const intRangedRange: usize = 1;
+pub const intRangedDices: usize = 2;
+pub const intRangedDiceNum: usize = 3; 
 
-pub const MaxItemTypes: usize = 4;
+pub const MaxItemTypes: usize = 6;
 type Items<'tgi> = [TGameItem<'tgi>; MaxItemTypes as usize];
 pub const ItemTypes: Items = [
     TGameItem {
@@ -174,6 +181,68 @@ pub const ItemTypes: Items = [
         Reals: [None; MaxRealInt],
         IsVisible: false,
     },
+    TGameItem {
+        ID: 4,
+        x: 0,
+        y: 0,
+        IType: TGameItemType::ItemAmmo,
+        Name: texts::STR_AMMO,
+        Ints: [
+            Some(5usize),
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        ],
+        Reals: [None; MaxRealInt],
+        IsVisible: false,
+    },
+    TGameItem {
+        ID: 5,
+        x: 0,
+        y: 0,
+        IType: TGameItemType::ItemRangedWeapon,
+        Name: texts::STR_CROSS,
+        Ints: [
+            Some(100usize),
+            Some(5),
+            Some(1),
+            Some(4),
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        ],
+        Reals: [None; MaxRealInt],
+        IsVisible: false,
+    },
 ];
 
 pub const MaxItems: usize = 256;
@@ -188,4 +257,13 @@ pub fn GetFreeItemNum() -> Option<usize> {
         }
     }
     None
+}
+
+pub fn GetItemName(itm: TGameItem) -> String {
+    use self::TGameItemType::*;
+    match itm.IType {
+        ItemRangedWeapon => itm.Name.to_owned() + "(" + &itm.Ints[intRangedAmmo].unwrap().to_string() + ")",
+        ItemAmmo => itm.Name.to_owned() + "(" + &itm.Ints[intAmmo].unwrap().to_string() + ")",
+        _ => itm.Name.to_string(),
+    }
 }
