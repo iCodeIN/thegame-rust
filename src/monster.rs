@@ -165,7 +165,7 @@ pub const MonsterTypes: Monsters = [
 ];
 
 /// The number of monsters depends on the size of the game map.
-pub const MaxMonsters: usize = ((map::LOCAL_MAP_WIDTH + map::LOCAL_MAP_HEIGHT) / 6) * 5; // default is `… * 5`
+pub const MaxMonsters: usize = ((map::LOCAL_MAP_WIDTH + map::LOCAL_MAP_HEIGHT) / 6) * 15; // default is `… * 5`
 pub static mut MONSTERS: [TMonster; MaxMonsters] = [TMonster {
     Name: texts::STR_MONSTER1,
     ID: 1_usize,

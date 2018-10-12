@@ -183,10 +183,10 @@ pub fn SkillTest(app: &mut cursive::Cursive, H: &mut THero, skl: usize) -> bool 
             low_level::ShowInfo(app, texts::STR_TRAPOK.to_owned());
             let H_Level = H.Level;
             IncXP(app, H, max(1, H_Level + map::random(0, H_Level + 1)));
-            SuccessSkillTest(app, H, skillTrapSearch)
+            SuccessSkillTest(app, H, skillTrapSearch);
         }
         skillRangedWeapon => {
-            SuccessSkillTest(app, H, skillRangedWeapon)
+            SuccessSkillTest(app, H, skillRangedWeapon);
         }
         _ => unreachable!(),
     };
@@ -225,9 +225,12 @@ fn SuccessSkillTest(app: &mut cursive::Cursive, H: &mut THero, skl: usize) {
 }
 
 pub fn DecHP(mut app: &mut cursive::Cursive, hero: &mut THero, dam: usize) {
-    hero.HP = if hero.HP >= dam { hero.HP - dam } else { 0 };
+    log!(format!("before — HP: {}    dam: {}", hero.HP, dam));
+    hero.HP = if hero.HP > dam { hero.HP - dam } else { 0 };
+    log!(format!("after — HP: {}", hero.HP));
     if hero.HP == 0 {
         low_level::HeroDied(&mut app);
+        low_level::PostMortem(app);
     }
 }
 

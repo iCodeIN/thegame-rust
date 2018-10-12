@@ -1295,10 +1295,10 @@ pub fn HeroDied(app: &mut Cursive) {
     ShowInfo(app, String::from(texts::STR_HERO_DIED));
 }
 
-fn PostMortem(app: &mut Cursive) {
+pub fn PostMortem(app: &mut Cursive) {
     disable_current_shortcuts(app);
     app.find_id::<TextView>("area")
         .unwrap()
         .set_content(texts::STR_GAME_OVER);
-    game::ShowGame(app);
+    //game::ShowGame(app);
 }
