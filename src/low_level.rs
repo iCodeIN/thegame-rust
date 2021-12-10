@@ -9,7 +9,7 @@ use map;
 use monster;
 use texts;
 
-pub use cursive::Cursive;
+pub use cursive::{Cursive, CursiveExt};
 //use cursive::theme;
 use cursive::event::Key;
 //use cursive::menu::MenuTree;
@@ -201,13 +201,13 @@ pub fn create_main_screen(app: &mut Cursive) {
         text.push_str("\n");
     }
     let sep = TextView::empty()
-        .with_id("sep")
+        .with_name("sep")
         .fixed_size((1, map::LOCAL_MAP_HEIGHT));
     app.add_layer(
         LinearLayout::horizontal()
             .child(
                 TextView::new(text)
-                    .with_id("area")
+                    .with_name("area")
                     .fixed_size((map::LOCAL_MAP_WIDTH, map::LOCAL_MAP_HEIGHT)),
             ).child(
                 LinearLayout::horizontal().child(sep).child(
@@ -217,21 +217,21 @@ pub fn create_main_screen(app: &mut Cursive) {
                                 .child(
                                     TextView::empty()
                                         .center()
-                                        .with_id("minimap")
+                                        .with_name("minimap")
                                         .fixed_size((12, 5)),
                                 ).child(
                                     TextView::empty()
                                         .center()
-                                        .with_id("compass")
+                                        .with_name("compass")
                                         .fixed_size((9, 5)),
                                 ),
-                        ).child(TextView::empty().with_id("sep1").fixed_size((9, 1)))
+                        ).child(TextView::empty().with_name("sep1").fixed_size((9, 1)))
                         .child(ScrollView::new(LinearLayout::vertical()
-                            .child(TextView::empty().with_id("info")
-                        )).with_id("history").fixed_size((24, 20))).child(TextView::empty().with_id("sep2").fixed_size((9, 1)))
+                            .child(TextView::empty().with_name("info")
+                        )).with_name("history").fixed_size((24, 20))).child(TextView::empty().with_name("sep2").fixed_size((9, 1)))
                         .child(
                             TextView::empty()
-                                .with_id("hero_info")
+                                .with_name("hero_info")
                                 .fixed_size((24, map::LOCAL_MAP_HEIGHT - 5 - 1 - 20 - 1 - 9)),
                         ).child(
                             Dialog::around(TextView::new(texts::HELP_EXIT_DIALOG))
@@ -239,24 +239,24 @@ pub fn create_main_screen(app: &mut Cursive) {
                                 .button("Quit", |mut a| {
                                     a.pop_layer();
                                     create_init_screen(&mut a);
-                                }).with_id("exit")
+                                }).with_name("exit")
                                 .fixed_size((24, 9)),
                         ),
                 ),
             ),
     );
     ShowMinimap(app);
-    app.find_id::<TextView>("compass")
+    app.find_name::<TextView>("compass")
         .unwrap()
         .set_content("    N    \n         \n W  @  O \n         \n    S    ");
-    app.find_id::<TextView>("sep1")
+    app.find_name::<TextView>("sep1")
         .unwrap()
         .set_content("________________________");
-    app.find_id::<TextView>("sep2")
+    app.find_name::<TextView>("sep2")
         .unwrap()
         .set_content("________________________");
     for _ in 0..map::LOCAL_MAP_HEIGHT {
-        app.find_id::<TextView>("sep").unwrap().append("|\n");
+        app.find_name::<TextView>("sep").unwrap().append("|\n");
     }
     disable_current_shortcuts(app);
     enable_main_shortcuts(app);
@@ -267,14 +267,14 @@ fn create_init_screen(app: &mut Cursive) {
     app.add_layer(
         Dialog::around(
             LinearLayout::vertical()
-                .child(TextView::empty().with_id("top").fixed_size((width, height)))
+                .child(TextView::empty().with_name("top").fixed_size((width, height)))
                 .child(
                     TextView::new(texts::INIT_DIALOG)
                         .center()
                         .fixed_size((width, 4)),
                 ).child(
                     TextView::empty()
-                        .with_id("bottom")
+                        .with_name("bottom")
                         .fixed_size((width, height)),
                 ).fixed_size((width, height * 2 + 4)),
         ).title("THE GAME")
@@ -282,11 +282,11 @@ fn create_init_screen(app: &mut Cursive) {
             game::GenerateAll();
             game::StartGame(&mut a);
         }).button("Quit", |a| a.quit())
-        .with_id("init"),
+        .with_name("init"),
     );
 
-    let top = &mut *app.find_id::<TextView>("top").unwrap();
-    let bottom = &mut *app.find_id::<TextView>("bottom").unwrap();
+    let top = &mut *app.find_name::<TextView>("top").unwrap();
+    let bottom = &mut *app.find_name::<TextView>("bottom").unwrap();
     for _ in 0..width * height {
         top.append(["^", ":", "."][map::random(0, 3) as usize]);
     }
@@ -329,7 +329,7 @@ fn create_slots_screen(app: &mut Cursive) {
         .title(texts::STR_HERO_SLOTITEMS)
         .content(LinearLayout::vertical()
             .child(TextView::new("\n"))
-            .child(list.with_id("slots_list"))
+            .child(list.with_name("slots_list"))
             .child(TextView::new(format!("\n{}", texts::STR_HERO_SLOTINFO))))
     );
     app.add_global_callback('q', |a| {
@@ -371,9 +371,9 @@ fn create_items_screen(app: &mut Cursive) {
         .title(texts::STR_HERO_ITEMS)
         .content(LinearLayout::vertical()
             .child(TextView::new("\n"))
-            .child(list.with_id("items_list"))
+            .child(list.with_name("items_list"))
             .child(TextView::new(format!("\n{}", texts::STR_HERO_ITEMINFO))))
-        //.with_id("d")
+        //.with_name("d")
     );
     app.add_global_callback('q', |a| {
         a.pop_layer();
@@ -413,7 +413,7 @@ fn move_item_to_slots(app: &mut Cursive, index: usize) {
 
 fn throw_item(app: &mut Cursive) {
     use game_item::ITEMS;
-    let selected_id = app.find_id::<SelectView<usize>>("items_list").unwrap().selected_id();
+    let selected_id = app.find_name::<SelectView<usize>>("items_list").unwrap().selected_id();
     let i = game_item::GetFreeItemNum();
     if let Some(i) = i {
         let mut curhero = get_mut_ref_curhero!();
@@ -675,7 +675,7 @@ pub fn PrepareMap() {}
 pub fn ShowCell(app: &mut Cursive, t: &map::TMapCell, x: usize, y: usize) {
     let c = TileRecords[t.Tile as usize].C;
     let mut text: String = app
-        .find_id::<TextView>("area")
+        .find_name::<TextView>("area")
         .unwrap()
         .get_content()
         .source()
@@ -684,13 +684,13 @@ pub fn ShowCell(app: &mut Cursive, t: &map::TMapCell, x: usize, y: usize) {
     let index = (map::LOCAL_MAP_WIDTH + 1) * (y - cur_map.LocalMapTop) + (x - cur_map.LocalMapLeft);
     text.remove(index);
     text.insert(index, if t.IsVisible { c } else { ' ' });
-    app.find_id::<TextView>("area").unwrap().set_content(text);
+    app.find_name::<TextView>("area").unwrap().set_content(text);
 }
 
 pub fn ShowItem(app: &mut Cursive, itm: &game_item::TGameItem) {
     use game_item::TGameItemType::*;
     let mut text: String = app
-        .find_id::<TextView>("area")
+        .find_name::<TextView>("area")
         .unwrap()
         .get_content()
         .source()
@@ -710,12 +710,12 @@ pub fn ShowItem(app: &mut Cursive, itm: &game_item::TGameItem) {
                     } as usize]
             .C,
     );
-    app.find_id::<TextView>("area").unwrap().set_content(text);
+    app.find_name::<TextView>("area").unwrap().set_content(text);
 }
 
 pub fn ShowHero(app: &mut Cursive, HeroNum: usize) {
     let mut text: String = app
-        .find_id::<TextView>("area")
+        .find_name::<TextView>("area")
         .unwrap()
         .get_content()
         .source()
@@ -728,7 +728,7 @@ pub fn ShowHero(app: &mut Cursive, HeroNum: usize) {
         (map::LOCAL_MAP_WIDTH + 1) * (h.y - cur_map.LocalMapTop) + (h.x - cur_map.LocalMapLeft);
     text.remove(index);
     text.insert(index, '@');
-    app.find_id::<TextView>("area").unwrap().set_content(text);
+    app.find_name::<TextView>("area").unwrap().set_content(text);
 }
 
 pub fn ShowHeroInfo(app: &mut Cursive, HeroNum: usize) {
@@ -765,7 +765,7 @@ pub fn ShowHeroInfo(app: &mut Cursive, HeroNum: usize) {
             + &hero.x.to_string()
             + ", "
             + &hero.y.to_string();
-    app.find_id::<TextView>("hero_info").unwrap().set_content(
+    app.find_name::<TextView>("hero_info").unwrap().set_content(
         info
     );
 }
@@ -782,7 +782,7 @@ fn ShowHeroSlots(app: &mut Cursive) {
 
 pub fn ShowMonster(app: &mut Cursive, m: &monster::TMonster) {
     let mut text: String = app
-        .find_id::<TextView>("area")
+        .find_name::<TextView>("area")
         .unwrap()
         .get_content()
         .source()
@@ -792,12 +792,12 @@ pub fn ShowMonster(app: &mut Cursive, m: &monster::TMonster) {
         + (m.x - cur_map.LocalMapLeft)) as usize;
     text.remove(index);
     text.insert(index, MonsterRecords[m.ID as usize].C);
-    app.find_id::<TextView>("area").unwrap().set_content(text);
+    app.find_name::<TextView>("area").unwrap().set_content(text);
 }
 
 pub fn ShowInfo(app: &mut Cursive, text: String) {
     let mut old_text = app
-        .find_id::<TextView>("info")
+        .find_name::<TextView>("info")
         .unwrap()
         .get_content()
         .source()
@@ -805,14 +805,14 @@ pub fn ShowInfo(app: &mut Cursive, text: String) {
     if old_text.len() > 1024 {
         old_text = old_text.splitn(2, "\n").collect::<Vec<_>>()[1].into()
     };
-    app.find_id::<TextView>("info").unwrap().set_content(
+    app.find_name::<TextView>("info").unwrap().set_content(
         old_text + "\n- " + &text
     );
-    app.find_id::<ScrollView<LinearLayout>>("history").unwrap().scroll_to_bottom();
+    app.find_name::<ScrollView<LinearLayout>>("history").unwrap().scroll_to_bottom();
 }
 
 pub fn ClearInfo(app: &mut Cursive) {
-    app.find_id::<TextView>("info").unwrap().set_content("");
+    app.find_name::<TextView>("info").unwrap().set_content("");
 }
 
 pub fn ShowMinimap(app: &mut Cursive) {
@@ -834,7 +834,7 @@ pub fn ShowMinimap(app: &mut Cursive) {
     };
     text.remove(6 * y + x);
     text.insert(6 * y + x, '@');
-    app.find_id::<TextView>("minimap")
+    app.find_name::<TextView>("minimap")
         .unwrap()
         .set_content(text);
 }
@@ -842,7 +842,7 @@ pub fn ShowMinimap(app: &mut Cursive) {
 fn ShowCompassInfo(app: &mut Cursive, direction: map::Direction) {
     use map::Direction::*;
     let mut text = app
-        .find_id::<TextView>("compass")
+        .find_name::<TextView>("compass")
         .unwrap()
         .get_content()
         .source()
@@ -873,7 +873,7 @@ fn ShowCompassInfo(app: &mut Cursive, direction: map::Direction) {
             text.insert(34, 'v');
         }
     }
-    app.find_id::<TextView>("compass")
+    app.find_name::<TextView>("compass")
         .unwrap()
         .set_content(text);
 }
@@ -1020,26 +1020,26 @@ pub fn GenerateHero(app: &mut Cursive) {
             .title("Select a hero")
             .button("Create", |a| {
                 let curhero = get_mut_ref_curhero!();
-                curhero.Race = if a.find_id::<Checkbox>("race0")
+                curhero.Race = if a.find_name::<Checkbox>("race0")
                                     .unwrap()
                                     .is_checked() { hero::raceHuman }
-                                else if a.find_id::<Checkbox>("race1")
+                                else if a.find_name::<Checkbox>("race1")
                                     .unwrap()
                                     .is_checked() { hero::raceElf }
-                                else if a.find_id::<Checkbox>("race2")
+                                else if a.find_name::<Checkbox>("race2")
                                     .unwrap()
                                     .is_checked() { hero::raceDwarf }
-                                else if a.find_id::<Checkbox>("race3")
+                                else if a.find_name::<Checkbox>("race3")
                                     .unwrap()
                                     .is_checked() { hero::raceHobbit }
                                 else { panic!("Error in hero creation dialog"); };
-                curhero.Class = if a.find_id::<Checkbox>("class0")
+                curhero.Class = if a.find_name::<Checkbox>("class0")
                                     .unwrap()
                                     .is_checked() { hero::classWarrior }
-                                else if a.find_id::<Checkbox>("class1")
+                                else if a.find_name::<Checkbox>("class1")
                                     .unwrap()
                                     .is_checked() { hero::classArcher }
-                                else if a.find_id::<Checkbox>("class2")
+                                else if a.find_name::<Checkbox>("class2")
                                     .unwrap()
                                     .is_checked() { hero::classWizard }
                                 else { panic!("Error in hero creation dialog"); };
@@ -1093,120 +1093,120 @@ pub fn GenerateHero(app: &mut Cursive) {
                                 .child(Checkbox::new()
                                     .on_change(|a, flag| {
                                         if flag {
-                                            a.find_id::<Checkbox>("race1")
+                                            a.find_name::<Checkbox>("race1")
                                                 .unwrap()
                                                 .uncheck();
-                                            a.find_id::<Checkbox>("race2")
+                                            a.find_name::<Checkbox>("race2")
                                                 .unwrap()
                                                 .uncheck();
-                                            a.find_id::<Checkbox>("race3")
+                                            a.find_name::<Checkbox>("race3")
                                                 .unwrap()
                                                 .uncheck();
-                                        } else if !a.find_id::<Checkbox>("race1")
+                                        } else if !a.find_name::<Checkbox>("race1")
                                             .unwrap()
                                             .is_checked()
-                                            && !a.find_id::<Checkbox>("race2")
+                                            && !a.find_name::<Checkbox>("race2")
                                                 .unwrap()
                                                 .is_checked()
-                                            && !a.find_id::<Checkbox>("race3")
+                                            && !a.find_name::<Checkbox>("race3")
                                                 .unwrap()
                                                 .is_checked() {
-                                                    a.find_id::<Checkbox>("race0")
+                                                    a.find_name::<Checkbox>("race0")
                                                         .unwrap()
                                                         .check();
                                                 } 
                                     })
-                                    .with_id("race0")
+                                    .with_name("race0")
                                     .fixed_size((10, 1))))
                             .child(LinearLayout::horizontal()
                                 .child(TextView::new(texts::RaceName[1]))
                                 .child(Checkbox::new()
                                     .on_change(|a, flag| {
                                         if flag {
-                                            a.find_id::<Checkbox>("race0")
+                                            a.find_name::<Checkbox>("race0")
                                                 .unwrap()
                                                 .uncheck();
-                                            a.find_id::<Checkbox>("race2")
+                                            a.find_name::<Checkbox>("race2")
                                                 .unwrap()
                                                 .uncheck();
-                                            a.find_id::<Checkbox>("race3")
+                                            a.find_name::<Checkbox>("race3")
                                                 .unwrap()
                                                 .uncheck();
-                                        } else if !a.find_id::<Checkbox>("race0")
+                                        } else if !a.find_name::<Checkbox>("race0")
                                             .unwrap()
                                             .is_checked()
-                                            && !a.find_id::<Checkbox>("race2")
+                                            && !a.find_name::<Checkbox>("race2")
                                                 .unwrap()
                                                 .is_checked()
-                                            && !a.find_id::<Checkbox>("race3")
+                                            && !a.find_name::<Checkbox>("race3")
                                                 .unwrap()
                                                 .is_checked() {
-                                                    a.find_id::<Checkbox>("race1")
+                                                    a.find_name::<Checkbox>("race1")
                                                         .unwrap()
                                                         .check();
                                                 }
                                     })
-                                    .with_id("race1")
+                                    .with_name("race1")
                                     .fixed_size((10, 1))))
                             .child(LinearLayout::horizontal()
                                 .child(TextView::new(texts::RaceName[2]))
                                 .child(Checkbox::new()
                                     .on_change(|a, flag| {
                                         if flag {
-                                            a.find_id::<Checkbox>("race0")
+                                            a.find_name::<Checkbox>("race0")
                                                 .unwrap()
                                                 .uncheck();
-                                            a.find_id::<Checkbox>("race1")
+                                            a.find_name::<Checkbox>("race1")
                                                 .unwrap()
                                                 .uncheck();
-                                            a.find_id::<Checkbox>("race3")
+                                            a.find_name::<Checkbox>("race3")
                                                 .unwrap()
                                                 .uncheck();
-                                        } else if !a.find_id::<Checkbox>("race0")
+                                        } else if !a.find_name::<Checkbox>("race0")
                                             .unwrap()
                                             .is_checked()
-                                            && !a.find_id::<Checkbox>("race1")
+                                            && !a.find_name::<Checkbox>("race1")
                                                 .unwrap()
                                                 .is_checked()
-                                            && !a.find_id::<Checkbox>("race3")
+                                            && !a.find_name::<Checkbox>("race3")
                                                 .unwrap()
                                                 .is_checked() {
-                                                    a.find_id::<Checkbox>("race2")
+                                                    a.find_name::<Checkbox>("race2")
                                                         .unwrap()
                                                         .check();
                                                 }
                                     })
-                                    .with_id("race2")
+                                    .with_name("race2")
                                     .fixed_size((10, 1))))
                             .child(LinearLayout::horizontal()
                                 .child(TextView::new(texts::RaceName[3]))
                                 .child(Checkbox::new()
                                     .on_change(|a, flag| {
                                         if flag {
-                                            a.find_id::<Checkbox>("race0")
+                                            a.find_name::<Checkbox>("race0")
                                                 .unwrap()
                                                 .uncheck();
-                                            a.find_id::<Checkbox>("race1")
+                                            a.find_name::<Checkbox>("race1")
                                                 .unwrap()
                                                 .uncheck();
-                                            a.find_id::<Checkbox>("race2")
+                                            a.find_name::<Checkbox>("race2")
                                                 .unwrap()
                                                 .uncheck();
-                                        } else if !a.find_id::<Checkbox>("race0")
+                                        } else if !a.find_name::<Checkbox>("race0")
                                             .unwrap()
                                             .is_checked()
-                                            && !a.find_id::<Checkbox>("race1")
+                                            && !a.find_name::<Checkbox>("race1")
                                                 .unwrap()
                                                 .is_checked()
-                                            && !a.find_id::<Checkbox>("race2")
+                                            && !a.find_name::<Checkbox>("race2")
                                                 .unwrap()
                                                 .is_checked() {
-                                                    a.find_id::<Checkbox>("race3")
+                                                    a.find_name::<Checkbox>("race3")
                                                         .unwrap()
                                                         .check();
                                                 }
                                     })
-                                    .with_id("race3")
+                                    .with_name("race3")
                                     .fixed_size((10, 1))))))
                     .child(DummyView.fixed_size((1, 10)))
                     .child(Dialog::new()
@@ -1218,76 +1218,76 @@ pub fn GenerateHero(app: &mut Cursive) {
                                 .child(Checkbox::new()
                                     .on_change(|a, flag| {
                                         if flag {
-                                            a.find_id::<Checkbox>("class1")
+                                            a.find_name::<Checkbox>("class1")
                                                 .unwrap()
                                                 .uncheck();
-                                            a.find_id::<Checkbox>("class2")
+                                            a.find_name::<Checkbox>("class2")
                                                 .unwrap()
                                                 .uncheck();
-                                        } else if !a.find_id::<Checkbox>("class1")
+                                        } else if !a.find_name::<Checkbox>("class1")
                                             .unwrap()
                                             .is_checked()
-                                            && !a.find_id::<Checkbox>("class2")
+                                            && !a.find_name::<Checkbox>("class2")
                                                 .unwrap()
                                                 .is_checked() {
-                                                    a.find_id::<Checkbox>("class0")
+                                                    a.find_name::<Checkbox>("class0")
                                                         .unwrap()
                                                         .check();
                                                 }
                                     })
-                                    .with_id("class0")
+                                    .with_name("class0")
                                     .fixed_size((12, 1))))
                             .child(LinearLayout::horizontal()
                                 .child(TextView::new(texts::ClassName[1]))
                                 .child(Checkbox::new()
                                     .on_change(|a, flag| {
                                         if flag {
-                                            a.find_id::<Checkbox>("class0")
+                                            a.find_name::<Checkbox>("class0")
                                                 .unwrap()
                                                 .uncheck();
-                                            a.find_id::<Checkbox>("class2")
+                                            a.find_name::<Checkbox>("class2")
                                                 .unwrap()
                                                 .uncheck();
-                                        } else if !a.find_id::<Checkbox>("class0")
+                                        } else if !a.find_name::<Checkbox>("class0")
                                             .unwrap()
                                             .is_checked()
-                                            && !a.find_id::<Checkbox>("class2")
+                                            && !a.find_name::<Checkbox>("class2")
                                                 .unwrap()
                                                 .is_checked() {
-                                                    a.find_id::<Checkbox>("class1")
+                                                    a.find_name::<Checkbox>("class1")
                                                         .unwrap()
                                                         .check();
                                                 }
                                     })
-                                    .with_id("class1")
+                                    .with_name("class1")
                                     .fixed_size((12, 1))))
                             .child(LinearLayout::horizontal()
                                 .child(TextView::new(texts::ClassName[2]))
                                 .child(Checkbox::new()
                                     .on_change(|a, flag| {
                                         if flag {
-                                            a.find_id::<Checkbox>("class0")
+                                            a.find_name::<Checkbox>("class0")
                                                 .unwrap()
                                                 .uncheck();
-                                            a.find_id::<Checkbox>("class1")
+                                            a.find_name::<Checkbox>("class1")
                                                 .unwrap()
                                                 .uncheck();
-                                        } else if !a.find_id::<Checkbox>("class0")
+                                        } else if !a.find_name::<Checkbox>("class0")
                                             .unwrap()
                                             .is_checked()
-                                            && !a.find_id::<Checkbox>("class1")
+                                            && !a.find_name::<Checkbox>("class1")
                                                 .unwrap()
                                                 .is_checked() {
-                                                    a.find_id::<Checkbox>("class2")
+                                                    a.find_name::<Checkbox>("class2")
                                                         .unwrap()
                                                         .check();
                                                 }
                                     })
-                                    .with_id("class2")
+                                    .with_name("class2")
                                     .fixed_size((12, 1)))))))
                 .fixed_size((46, 10))));
-    app.find_id::<Checkbox>("race0").unwrap().check();
-    app.find_id::<Checkbox>("class0").unwrap().check();
+    app.find_name::<Checkbox>("race0").unwrap().check();
+    app.find_name::<Checkbox>("class0").unwrap().check();
     disable_current_shortcuts(app);
 }
 
@@ -1297,7 +1297,7 @@ pub fn HeroDied(app: &mut Cursive) {
 
 pub fn PostMortem(app: &mut Cursive) {
     disable_current_shortcuts(app);
-    app.find_id::<TextView>("area")
+    app.find_name::<TextView>("area")
         .unwrap()
         .set_content(texts::STR_GAME_OVER);
     //game::ShowGame(app);
