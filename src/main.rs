@@ -11,7 +11,7 @@
 #![allow(non_upper_case_globals)]
 #![allow(dead_code)]
 
-extern crate cursive_core as cursive;
+extern crate cursive;
 extern crate rand;
 
 //extern crate decorators;
